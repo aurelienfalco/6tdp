@@ -5,6 +5,7 @@
 
 //#define PRINT_ALIVE
 #define BS 4096
+#define BLOCK_SIZE 64
 
 #define cell( _i_, _j_ ) board[ ldboard * (_j_) + (_i_) ]
 #define ngb( _i_, _j_ )  nbngb[ ldnbngb * ((_j_) - 1) + ((_i_) - 1 ) ]
@@ -56,7 +57,7 @@ void output_board(int N, int *board, int ldboard, int loop)
 
  int main(int argc, char* argv[])
  {
- 	int i, j, loop, num_alive, maxloop;
+ 	int i, j, k, l, loop, num_alive, maxloop;
  	int ldboard, ldnbngb;
  	double t1, t2;
  	double temps;
@@ -99,48 +100,54 @@ void output_board(int N, int *board, int ldboard, int loop)
  			cell(   0,    i) = cell(BS,  i);
  			cell(BS+1,    i) = cell( 1,  i);
  		}
-
- 		for (j = 1; j <= BS; j++) {
- 			for (i = 1; i <= BS; i++) {
- 				ngb( i, j ) =
- 				cell( i-1, j-1 ) + cell( i, j-1 ) + cell( i+1, j-1 ) +
- 				cell( i-1, j   ) +                  cell( i+1, j   ) +
- 				cell( i-1, j+1 ) + cell( i, j+1 ) + cell( i+1, j+1 );
+#pragma omp parallel for private(i,j) collapse(2) 
+ 		for (l = 0; l < BS/BLOCK_SIZE; l++) {
+ 			for (k = 0; k < BS/BLOCK_SIZE; k++) {
+ 				for (j = 1; j <= BLOCK_SIZE; j++) {
+ 					for (i = 1; i <= BLOCK_SIZE; i++) {
+ 						int x = i + k * BLOCK_SIZE;
+ 						int y = j + l * BLOCK_SIZE;
+ 						ngb( x, y) =
+ 						cell( x-1, y-1 ) + cell( x, y-1 ) + cell( x+1, y-1 ) +
+ 						cell( x-1, y   ) +                  cell( x+1, y   ) +
+ 						cell( x-1, y+1 ) + cell( x, y+1 ) + cell( x+1, y+1 );
+ 					}
+ 				}
  			}
  		}
-
- 		num_alive = 0;
- 		for (j = 1; j <= BS; j++) {
- 			for (i = 1; i <= BS; i++) {
- 				if ( (ngb( i, j ) < 2) || 
- 					(ngb( i, j ) > 3) ) {
- 					cell(i, j) = 0;
+ 				num_alive = 0;
+#pragma omp parallel for private(i,j) reduction(+:num_alive)
+ 				for (j = 1; j <= BS; j++) {
+ 					for (i = 1; i <= BS; i++) {
+ 						if ( (ngb( i, j ) < 2) || 
+ 							(ngb( i, j ) > 3) ) {
+ 							cell(i, j) = 0;
+ 					}
+ 					else {
+ 						if ((ngb( i, j )) == 3)
+ 							cell(i, j) = 1;
+ 					}
+ 					if (cell(i, j) == 1) {
+ 						num_alive ++;
+ 					}
+ 				}
  			}
- 			else {
- 				if ((ngb( i, j )) == 3)
- 					cell(i, j) = 1;
- 			}
- 			if (cell(i, j) == 1) {
- 				num_alive ++;
- 			}
- 		}
- 	}
 
 		//output_board( BS, &(cell(1, 1)), ldboard, loop);
 #ifdef PRINT_ALIVE
- 	printf("%d \n", num_alive);
+ 			printf("%d \n", num_alive);
 #endif
- }
+ 		}
 
- t2 = mytimer();
- temps = t2 - t1;
- printf("Final number of living cells = %d\n", num_alive);
- printf("time=%.2lf ms\n",(double)temps * 1.e3);
+ 		t2 = mytimer();
+ 		temps = t2 - t1;
+ 		printf("Final number of living cells = %d\n", num_alive);
+ 		printf("time=%.2lf ms\n",(double)temps * 1.e3);
 
     //output_board( BS, &(cell(1, 1)), ldboard, maxloop);
 
- free(board);
- free(nbngb);
- return EXIT_SUCCESS;
-}
+ 		free(board);
+ 		free(nbngb);
+ 		return EXIT_SUCCESS;
+ 	}
 

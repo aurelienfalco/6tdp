@@ -4,7 +4,7 @@
 #include <string.h>
 
 //#define PRINT_ALIVE
-#define BS 1000
+#define BS 4096
 
 #define cell( _i_, _j_ ) board[ ldboard * (_j_) + (_i_) ]
 #define ngb( _i_, _j_ )  nbngb[ ldnbngb * ((_j_) - 1) + ((_i_) - 1 ) ]
@@ -100,7 +100,7 @@ void output_board(int N, int *board, int ldboard, int loop)
  			cell(BS+1,    i) = cell( 1,  i);
  		}
 
-#pragma omp parallel for private(i)
+#pragma omp parallel for private(i,j)
  		for (j = 1; j <= BS; j++) {
  			for (i = 1; i <= BS; i++) {
  				ngb( i, j ) =
@@ -111,7 +111,7 @@ void output_board(int N, int *board, int ldboard, int loop)
  		}
 
  		num_alive = 0;
-#pragma omp parallel for private(i) reduction(+:num_alive)
+#pragma omp parallel for private(i,j) reduction(+:num_alive)
  		for (j = 1; j <= BS; j++) {
  			for (i = 1; i <= BS; i++) {
  				if ( (ngb( i, j ) < 2) || 
