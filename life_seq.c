@@ -6,10 +6,12 @@
 //#define PRINT_ALIVE
 #define BS 1000
 
+int num_alive;
+
 #define cell( _i_, _j_ ) board[ ldboard * (_j_) + (_i_) ]
 #define ngb( _i_, _j_ )  nbngb[ ldnbngb * ((_j_) - 1) + ((_i_) - 1 ) ]
 
-inline double mytimer(void)
+double mytimer(void)
 {
     struct timeval tp;
     gettimeofday( &tp, NULL );
@@ -37,7 +39,7 @@ void output_board(int N, int *board, int ldboard, int loop)
  */
 void generate_initial_board(int N, int *board, int ldboard)
 {
-    int i, j
+    int i, j;
 
     for (i = 1; i <= BS; i++) {
 	for (j = 1; j <= BS; j++) {
@@ -77,7 +79,7 @@ int main(int argc, char* argv[])
     board = malloc( ldboard * ldboard * sizeof(int) );
     nbngb = malloc( ldnbngb * ldnbngb * sizeof(int) );
 
-    generate_initial_board( BS, &(cell(1, 1)), ldboard, 0 );
+    generate_initial_board( BS, &(cell(1, 1)), ldboard );
 
     //output_board( BS, &(cell(1, 1)), ldboard, 0 );
 

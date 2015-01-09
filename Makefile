@@ -1,7 +1,7 @@
 CC = mpicc
 EX = mpiexec
-EXEC = lu
-ALG = dger dgetf2 lu dscal util dgemm_scalaire dtrsm dgesv dgetrf
+EXEC = main.c
+ALG = main.c
 SRC=$(ALG:=.c)
 OBJ=$(SRC:.c=.o)
 CFLAGS = -std=c99 -g -O0 -Wall -Wextra
@@ -10,6 +10,12 @@ m = 6
 seq = 0
 
 all: $(EXEC)
+
+seq-compile: life_seq.c
+	gcc $(CFLAGS) $^ -o life_seq
+
+seq: seq-compile
+	./life_seq
 
 exec: $(EXEC)
 	@$(EX) -np $(n) $(EXEC) $(m) $(seq) $(p)
