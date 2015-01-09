@@ -38,7 +38,7 @@ void output_board(int N, int *board, int ldboard, int loop)
  int generate_initial_board(int N, int *board, int ldboard)
  {
  	int i, j, num_alive = 0;
- 	
+
  	for (i = 1; i <= N; i++) {
  		for (j = 1; j <= N; j++) {
  			if (i == N/2 || j == N/2) {
@@ -60,10 +60,10 @@ void output_board(int N, int *board, int ldboard, int loop)
  	int ldboard, ldnbngb;
  	double t1, t2;
  	double temps;
- 	
+
  	int *board;
  	int *nbngb;
- 	
+
  	if (argc < 2) {
  		maxloop = 10;
  	} else {
@@ -100,6 +100,7 @@ void output_board(int N, int *board, int ldboard, int loop)
  			cell(BS+1,    i) = cell( 1,  i);
  		}
 
+#pragma omp parallel for private(i)
  		for (j = 1; j <= BS; j++) {
  			for (i = 1; i <= BS; i++) {
  				ngb( i, j ) =
@@ -110,6 +111,7 @@ void output_board(int N, int *board, int ldboard, int loop)
  		}
 
  		num_alive = 0;
+#pragma omp parallel for private(i) reduction(+:num_alive)
  		for (j = 1; j <= BS; j++) {
  			for (i = 1; i <= BS; i++) {
  				if ( (ngb( i, j ) < 2) || 

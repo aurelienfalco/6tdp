@@ -4,6 +4,7 @@ EXEC = main.c
 ALG = main.c
 SRC=$(ALG:=.c)
 OBJ=$(SRC:.c=.o)
+VERSION= seq omp mpi
 CFLAGS = -std=c99 -g -O0 -Wall -Wextra
 n = 2
 m = 6
@@ -11,11 +12,14 @@ seq = 0
 
 all: $(EXEC)
 
-seq-compile: life_seq.c
-	gcc $(CFLAGS) -fopenmp $^ -o life_seq
+life_%: life_%.c
+	$(CC) $(CFLAGS) $^ -o $@
 
-seq: seq-compile
-	./life_seq
+life_omp: life_omp.c
+	$(CC) $(CFLAGS) -fopenmp $^ -o $@
+
+$(VERSION):%: life_%
+	./$^
 
 exec: $(EXEC)
 	@$(EX) -np $(n) $(EXEC) $(m) $(seq) $(p)
