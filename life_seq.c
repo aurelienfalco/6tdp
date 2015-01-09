@@ -99,16 +99,17 @@ int main(int argc, char* argv[])
 			cell(   0,    i) = cell(BS,  i);
 			cell(BS+1,    i) = cell( 1,  i);
 		}
-
-		for (i = 1; i <= BS; i++) {
-			for (j = 1; j <= BS; j++) {
+		
+#pragma omp parallel for schedule(static)
+		for (j = 1; j <= BS; j++) {
+			for (i = 1; i <= BS; i++) {
 				ngb( i, j ) =
 					cell( i-1, j-1 ) + cell( i, j-1 ) + cell( i+1, j-1 ) +
 					cell( i-1, j   ) +                  cell( i+1, j   ) +
 					cell( i-1, j+1 ) + cell( i, j+1 ) + cell( i+1, j+1 );
 			}
 		}
-
+		
 		num_alive = 0;
 		for (i = 1; i <= BS; i++) {
 			for (j = 1; j <= BS; j++) {

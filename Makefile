@@ -12,7 +12,7 @@ seq = 0
 all: $(EXEC)
 
 seq-compile: life_seq.c
-	gcc -fopenmp $(CFLAGS) $^ -o life_seq
+	gcc $(CFLAGS) -fopenmp $^ -o life_seq
 
 seq: seq-compile
 	./life_seq
