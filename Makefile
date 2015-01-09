@@ -4,25 +4,24 @@ EXEC = main.c
 ALG = main.c
 SRC=$(ALG:=.c)
 OBJ=$(SRC:.c=.o)
-VERSION= seq omp omp-bloc mpi
-CFLAGS = -std=c99 -g -O0 -Wall -Wextra
-n = 2
-m = 6
-seq = 0
+VERSION= seq omp omp-bloc
+CFLAGS = -std=c99 -g -O0 -Wall -Wextra -fopenmp 
+nx = 4
+ny = 3
 
 all: $(EXEC)
 
 life_%: life_%.c
 	$(CC) $(CFLAGS) $^ -o $@
 
-life_om%: life_om%.c
-	$(CC) $(CFLAGS) -fopenmp $^ -o $@
-
 $(VERSION):%: life_%
 	./$^
 
+mpi:%: life_%
+	n=$(shell echo $(nx)\*$(ny) | bc); mpiexec -np $${n} $^ -x $(nx) -y $(ny)
+
 exec: $(EXEC)
-	@$(EX) -np $(n) $(EXEC) $(m) $(seq) $(p)
+	@$(EX) -np $(n) $(EXEC) -t $(t) -x $(nx) -y $(ny)
 
 qsub: $(EXEC)
 	rm -rf res.*
@@ -54,5 +53,5 @@ plot-sp:
 	@eog Speedup.png 2>/dev/null &
 
 clean:
-	rm -rf *.o $(EXEC) tests *~
+	rm -rf *.o $(EXEC) life_seq life_omp life_omp-bloc life_mpi *~
 
