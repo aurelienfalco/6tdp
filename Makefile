@@ -4,15 +4,22 @@ EXEC = main.c
 ALG = main.c
 SRC=$(ALG:=.c)
 OBJ=$(SRC:.c=.o)
-VERSION= seq omp omp-bloc
-CFLAGS = -std=c99 -g -O0 -Wall -Wextra -fopenmp 
-nx = 4
-ny = 3
+VERSION= seq omp omp-bloc pthread
+CFLAGS = -std=c99 -g -O0 -Wall -Wextra
+n = 2
+m = 6
+seq = 0
 
 all: $(EXEC)
 
 life_%: life_%.c
 	$(CC) $(CFLAGS) $^ -o $@
+
+life_om%: life_om%.c
+	$(CC) $(CFLAGS) -fopenmp $^ -o $@
+
+life_thread: life_thread.c
+	$(CC) $(CFLAGS) $^ -o $@ -lpthread
 
 $(VERSION):%: life_%
 	./$^
