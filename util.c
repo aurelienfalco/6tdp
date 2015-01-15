@@ -9,6 +9,7 @@ double mytimer(void)
 
 void output_board(int N, int *board, int ldboard, int loop)
 {
+	if (N > 80) fprintf(stderr, "Warning: Board might not hold on terminal\n");
 	int i,j;
 	printf("loop %d\n", loop);
 	for (i=0; i<N; i++) {
@@ -47,17 +48,17 @@ int get_arg(int argc,char** argv,int* nb_row, int* nb_col)
 	BS = 4096;
 	maxloop = 10;
 	char c;
-	while ((c = getopt (argc, argv, "t:x:y:s:")) != -1){
+	while ((c = getopt (argc, argv, "t:r:c:s:")) != -1){
 		switch (c) {
 			case 't':
 			maxloop = atoi(optarg);
 			break;
-			case 'x':
+			case 'r':
 			if (nb_row != NULL)
 				*nb_row = atoi(optarg);
 			else return 1;
 			break;
-			case 'y':
+			case 'c':
 			if (nb_col != NULL)
 				*nb_col = atoi(optarg);
 			else return 1;

@@ -10,8 +10,8 @@ SRC=$(ALG:=.c)
 OBJ=$(SRC:.c=.o)
 CFLAGS = -std=c99 -g -O0 -Wall -Wextra
 n = 6
-nx = 3
-ny = 2
+nr = 3
+nc = 2
 t = 10
 s = 4096
 
@@ -30,7 +30,7 @@ $(VERSION):%: life_%
 	./$< -t $(t) -s $(s)
 
 mpi:%: life_%
-	n=$(shell echo $(nx)\*$(ny) | bc); mpiexec -np $${n} $< -t $(t) -x $(nx) -y $(ny) -s $(s)
+	n=$(shell echo $(nr)\*$(nc) | bc); mpiexec -np $${n} $< -t $(t) -r $(nr) -c $(nc) -s $(s)
 
 exec: $(v)
 
