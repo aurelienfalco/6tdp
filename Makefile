@@ -20,7 +20,7 @@ all: life_$(v)
 life_om%: life_om%.c util.o
 	$(CC) $(CFLAGS) -fopenmp $^ -o $@
 
-life_seq:%: %.c util.o
+life_%: life_%.c util.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 life_pthread:%: %.c util.o
