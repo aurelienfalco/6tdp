@@ -12,24 +12,25 @@ CFLAGS = -std=c99 -g -O0 -Wall -Wextra -fopenmp
 n = 6
 nx = 3
 ny = 2
-seq = 0
+t = 10
+s = 4096
 
 all: life_$(v)
 
-life_%: life_%.c
+life_%: life_%.c util.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-life_om%: life_om%.c
+life_om%: life_om%.c util.o
 	$(CC) $(CFLAGS) -fopenmp $^ -o $@
 
-life_thread: life_thread.c
+life_thread: life_thread.c util.o
 	$(CC) $(CFLAGS) $^ -o $@ -lpthread
 
 $(VERSION):%: life_%
-	./$^
+	./$< -t $(t) -s $(s)
 
 mpi:%: life_%
-	n=$(shell echo $(nx)\*$(ny) | bc); mpiexec -np $${n} $^ -x $(nx) -y $(ny)
+	n=$(shell echo $(nx)\*$(ny) | bc); mpiexec -np $${n} $< -t $(t) -x $(nx) -y $(ny) -s $(s)
 
 exec: $(v)
 
@@ -60,5 +61,5 @@ plot-sp:
 	@eog Speedup.png 2>/dev/null &
 
 clean:
-	rm -rf *.o $(v) life_seq life_omp life_omp-bloc life_mpi *~
+	rm -rf *.o $(v) $(addprefix life_,$(VERSION) mpi) *~
 

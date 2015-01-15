@@ -1,68 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/time.h>
-#include <string.h>
 #include "mpi.h"
-#include <getopt.h>
+#include "util.h"
 
-//#define PRINT_ALIVE
-#define BS 4096
 #define DIMENSION 2
-
-#define cell( _i_, _j_ ) board[ ldboard * (_j_) + (_i_) ]
-#define local_cell( _i_, _j_ ) local_board[ row_block_size * (_j_) + (_i_) ]
-#define ngb( _i_, _j_ )  nbngb[ ldnbngb * ((_j_) - 1) + ((_i_) - 1 ) ]
-
-double mytimer(void)
-{
-	struct timeval tp;
-	gettimeofday( &tp, NULL );
-	return tp.tv_sec + 1e-6 * tp.tv_usec;
-}
-
-void output_board(int N, int *board, int ldboard, int loop)
-{
-	int i,j;
-	printf("loop %d\n", loop);
-	for (i=0; i<N; i++) {
-		for (j=0; j<N; j++) {
-			if ( cell( i, j ) == 1)
-				printf("X");
-			else
-				printf(" ");
-		}
-		printf("\n");
-	}
-}
-
-int generate_initial_board(int N, int *board, int ldboard)
-{
-	int i, j, num_alive = 0;
-
-	for (i = 1; i <= N; i++) {
-		for (j = 1; j <= N; j++) {
-			if (i == N/2 || j == N/2) {
-				cell(i, j) = 1;
-				num_alive ++;
-			}
-			else {
-				cell(i, j) = 0;
-			}
-		}
-	}
-
-	return num_alive;
-}
 
 int main(int argc, char* argv[])
 {
-	int i, j, loop, num_alive, maxloop = 10;
+	int i, j, loop = 0, num_alive;
 	int ldboard, ldnbngb;
 	double t1, t2;
 	double temps;
-	char c;
-
 	int rank, nb_proc, nb_row, nb_col, grid_rank[DIMENSION] = {42, 42};
+
 	MPI_Status status;
 	MPI_Comm grid;
 	MPI_Datatype blocktype, blocktype2;
@@ -71,22 +19,7 @@ int main(int argc, char* argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &nb_proc);
 
-
-	while ((c = getopt (argc, argv, "t:x:y:")) != -1){
-		switch (c) {
-			case 't':
-			maxloop = atoi(optarg);
-			break;
-			case 'x':
-			nb_row = atoi(optarg);
-			break;
-			case 'y':
-			nb_col = atoi(optarg);
-			break;
-			default:
-			return 1;
-		}
-	}
+	get_arg(argc,argv,&nb_row,&nb_col);
 
 	// pour tester
 	int dims[DIMENSION] = {nb_row, nb_col}, periods[DIMENSION] = {1, 0}, reorder = 1;
@@ -125,7 +58,8 @@ int main(int argc, char* argv[])
 			counts [i + nb_row*j] = 1;
 		}
 	}
-	
+	if (rank == 0)
+		output_board( BS, &(cell(1, 1)), ldboard, 0);
 	MPI_Scatterv(board, counts, disps, blocktype, local_board, row_block_size * col_block_size, MPI_INT, 0, MPI_COMM_WORLD);
     // output_board( row_block_size, &(cell(1, 1)), row_block_size, 0 );
 
@@ -174,7 +108,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-		//output_board( BS, &(cell(1, 1)), ldboard, loop);
+		// output_board( BS, &(cell(1, 1)), ldboard, loop);
 #ifdef PRINT_ALIVE
 	printf("%d \n", num_alive);
 #endif
