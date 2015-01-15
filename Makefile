@@ -8,7 +8,7 @@ v = mpi
 ALG = $(v)
 SRC=$(ALG:=.c)
 OBJ=$(SRC:.c=.o)
-CFLAGS = -std=c99 -g -O0 -Wall -Wextra -fopenmp
+CFLAGS = -std=c99 -g -O0 -Wall -Wextra
 n = 6
 nx = 3
 ny = 2
@@ -17,13 +17,13 @@ s = 4096
 
 all: life_$(v)
 
-life_%: life_%.c util.o
-	$(CC) $(CFLAGS) $^ -o $@
-
 life_om%: life_om%.c util.o
 	$(CC) $(CFLAGS) -fopenmp $^ -o $@
 
-life_thread: life_thread.c util.o
+life_seq:%: %.c util.o
+	$(CC) $(CFLAGS) $^ -o $@
+
+life_pthread:%: %.c util.o
 	$(CC) $(CFLAGS) $^ -o $@ -lpthread
 
 $(VERSION):%: life_%
