@@ -9,9 +9,9 @@ ALG = $(v)
 SRC=$(ALG:=.c)
 OBJ=$(SRC:.c=.o)
 CFLAGS = -std=c99 -g -O0 -Wall -Wextra
-n = 4
+n = 6
 nr = 2
-nc = 2
+nc = 3
 t = 10
 s = 4096
 

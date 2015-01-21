@@ -68,7 +68,7 @@
  		}
  	}
 
-		//output_board( BS, &(cell(1, 1)), ldboard, loop);
+		// output_board( BS, &(cell(1, 1)), ldboard, loop);
 #ifdef PRINT_ALIVE
  	printf("%d \n", num_alive);
 #endif
@@ -79,7 +79,7 @@
  printf("Final number of living cells = %d\n", num_alive);
  printf("time=%.2lf ms\n",(double)temps * 1.e3);
 
-    //output_board( BS, &(cell(1, 1)), ldboard, maxloop);
+    // output_board( BS, &(cell(1, 1)), ldboard, maxloop);
 
  free(board);
  free(nbngb);
