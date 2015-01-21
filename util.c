@@ -14,7 +14,7 @@ void output_board(int N, int *board, int ldboard, int loop)
 	printf("loop %d\n", loop);
 	for (i=0; i<N; i++) {
 		for (j=0; j<N; j++) {
-			if ( cell( i, j ) == 1)
+			if ( cell( i, j) == 1)
 				printf("X");
 			else
 				printf(" ");
@@ -22,6 +22,23 @@ void output_board(int N, int *board, int ldboard, int loop)
 		printf("\n");
 	}
 }
+
+void output_block(int M, int N, int *local_board, int ldboard, int loop)
+{
+	if (N > 80) fprintf(stderr, "Warning: Board might not hold on terminal\n");
+	int i,j;
+	printf("loop %d\n", loop);
+	for (i=0; i<M; i++) {
+		for (j=0; j<N; j++) {
+			if ( cell_ld(local_board, i, j, ldboard ) == 1)
+				printf("X");
+			else
+				printf(" ");
+		}
+		printf("\n");
+	}
+}
+
 
 int generate_initial_board(int N, int *board, int ldboard)
 {

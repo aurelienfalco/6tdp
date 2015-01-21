@@ -7,10 +7,11 @@ int main(int argc, char* argv[])
 {
 	int i, j, loop = 0, num_alive;
 	int ldboard, ldnbngb;
+	int *board, *tmp_board, *local_board;
+	int *nbngb;
 	double t1, t2;
 	double temps;
 	int rank, nb_proc, nb_row, nb_col, grid_rank[DIMENSION] = {42, 42};
-
 	MPI_Status status;
 	MPI_Comm grid;
 	MPI_Datatype blocktype, blocktype2;
@@ -24,14 +25,9 @@ int main(int argc, char* argv[])
 	// Create processus grid
 	int dims[DIMENSION] = {nb_row, nb_col}, periods[DIMENSION] = {1, 0}, reorder = 1;
 	MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, reorder, &grid);
-
 	MPI_Cart_coords(grid, rank, DIMENSION, grid_rank);
 
-	int *board, *local_board;
-	int *nbngb;
-
 	num_alive = 0;
-
     /* Leading dimension of the board array */
 	ldboard = BS + 2;
     /* Leading dimension of the neigbour counters array */
@@ -44,7 +40,10 @@ int main(int argc, char* argv[])
 
 	int row_block_size = ldboard / nb_row;
 	int col_block_size = ldboard / nb_col;
-	local_board = malloc( row_block_size * col_block_size * sizeof(int) );
+	int local_ld = row_block_size + 2;
+
+	tmp_board = malloc( row_block_size * col_block_size * sizeof(int) );
+	local_board = malloc( (row_block_size + 2)  * (col_block_size + 2) * sizeof(int) );
 
 	// Create types for sending local boards
 	MPI_Type_vector(col_block_size, row_block_size, ldboard, MPI_INT, &blocktype2);
@@ -65,10 +64,14 @@ int main(int argc, char* argv[])
 		output_board( BS, &(cell(1, 1)), ldboard, 0);
 
 	// Scattering board on grid
-	MPI_Scatterv(board, counts, disps, blocktype, local_board, row_block_size * col_block_size, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Scatterv(board, counts, disps, blocktype, tmp_board, row_block_size * col_block_size, MPI_INT, 0, MPI_COMM_WORLD);
 
-	if (grid_rank[1] == 1)
-		local_cell(4, 3) = 1;
+	for (int i = 0; i < col_block_size; ++i)
+	{
+		memcpy(local_board + local_ld * (i+1) + 1, tmp_board + row_block_size * i, row_block_size* sizeof(int));
+	}
+	if (grid_rank[1] == 0)
+		cell_ld(local_board, 2, 2, local_ld) = 1;
 
 
 	printf("Starting number of living cells = %d\n", num_alive);
@@ -117,8 +120,13 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	for (int i = 0; i < col_block_size; ++i)
+	{
+		memcpy(tmp_board + row_block_size * i, local_board + local_ld * (i+1) + 1, row_block_size* sizeof(int));
+	}
+
 	// MPI_Reduce(num_alive);
-	MPI_Gatherv(local_board,  row_block_size * col_block_size, MPI_INT, board, counts, disps, blocktype, 0, MPI_COMM_WORLD);
+	MPI_Gatherv(tmp_board,  row_block_size * col_block_size, MPI_INT, board, counts, disps, blocktype, 0, MPI_COMM_WORLD);
 	if(rank == 0){
 		output_board( BS, &(cell(1, 1)), ldboard, loop);
 	}
