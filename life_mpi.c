@@ -36,13 +36,7 @@ int main(int argc, char* argv[])
 	board = malloc( ldboard * ldboard * sizeof(int) );
 	nbngb = malloc( ldnbngb * ldnbngb * sizeof(int) );
 
-	// num_alive = generate_initial_board( BS, &(cell(1, 1)), ldboard );
-	for (i = 0; i < BS; i++) {
-		cell(1, i) = 1;
-		cell(i, 1) = 1;
-		cell(BS-1, i) = 1;
-		cell(i, BS-1) = 1;
-	}
+	num_alive = generate_initial_board( BS, &(cell(1, 1)), ldboard );
 
 	int col_block_size = ldnbngb / nb_col;
 	int row_block_size = ldnbngb / nb_row;
@@ -82,14 +76,7 @@ int main(int argc, char* argv[])
 		memcpy(local_board + local_ld * (i+1) + 1, tmp_board + row_block_size * i, row_block_size* sizeof(int));
 	}
 	// if (grid_rank[1] == 0){
-	for (int i = 0; i < 4; ++i)
-	{
-		// cell_ld(local_board, 1, i, local_ld) = 1;
-		// cell_ld(local_board, row_block_size-1, i, local_ld) = 1;
-	}
-	cell_ld(local_board, row_block_size/2, col_block_size/2, local_ld) = 1;
-	if (grid_rank[0] == 1 && grid_rank[1] == 1)
-		output_block(row_block_size, col_block_size, local_board, local_ld, 0);
+		// cell_ld(local_board, row_block_size/2, col_block_size/2, local_ld) = 1;
 	// }
 
 
@@ -98,21 +85,21 @@ int main(int argc, char* argv[])
 
 	for (loop = 1; loop <= maxloop; loop++) {
 	/*
-		MPI_Send(local_board+1, 1, row_type, grid_rank[1]-1, 99, MPI_COMM_WORLD);
-		MPI_Send(local_board+ldboard+1, 1, row_type, grid_rank[1]+1, 99, MPI_COMM_WORLD);
-		MPI_Send(local_board, local_ld, MPI_INT, grid_rank[0]+1, 99, MPI_COMM_WORLD);
-		cell_ld(   0, 0   ) = cell_ld(row_block_size, col_block_size);
-		cell_ld(   0, col_block_size+1) = cell_ld(BS,  1);
-		cell_ld(row_block_size+1, 0   ) = cell_ld( 1, col_block_size);
-		cell_ld(row_block_size+1, col_block_size+1) = cell_ld( 1,  1);
+		// exchange cells with proc
+		// Send rows
+		MPI_Send(local_board + local_ld + 1, 1, row_type, grid_rank[1]-1, 99, MPI_COMM_WORLD);
+		MPI_Send(local_board + (2 * (local_ld - 1)), 1, row_type, grid_rank[1]+1, 99, MPI_COMM_WORLD);
+		// Send columns
+		MPI_Send(local_board + local_ld, local_ld, MPI_INT, grid_rank[0]-1, 99, MPI_COMM_WORLD);
+		MPI_Send(local_board + local_ld * col_block_size, local_ld, MPI_INT, grid_rank[0]+1, 99, MPI_COMM_WORLD);
 
-		for (i = 1; i <= ; i++) {
-			cell_ld(   i,    0) = cell_ld( i, col_block_size);
-			cell_ld(   i, col_block_size+1) = cell_ld( i,  1);
-			cell_ld(   0,    i) = cell_ld(row_block_size,  i);
-			cell_ld(row_block_size+1,    i) = cell_ld( 1,  i);
-		}
-		// exchange cell_lds with proc
+		// Recv rows
+		MPI_Recv(local_board, 1, row_type, grid_rank[1]-1, 99, MPI_COMM_WORLD, &status);
+		MPI_Recv(local_board + (2 * local_ld - 1), 1, row_type, grid_rank[1]+1, 99, MPI_COMM_WORLD, &status);
+		// Recv cols
+		MPI_Recv(local_board, local_ld, MPI_INT, grid_rank[0]-1, 99, MPI_COMM_WORLD, &status);
+		MPI_Recv(local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, grid_rank[0]+1, 99, MPI_COMM_WORLD, &status);
+		/**/
 
 		for (j = 1; j <= row_block_size; j++) {
 			for (i = 1; i <= col_block_size; i++) {
@@ -139,7 +126,6 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
-/**/
 	}
 
 	for (int i = 0; i < col_block_size; ++i)
