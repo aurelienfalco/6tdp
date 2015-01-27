@@ -9,7 +9,10 @@ double mytimer(void)
 
 void output_board(int N, int *board, int ldboard, int loop)
 {
-	if (N > 80) fprintf(stderr, "Warning: Board might not hold on terminal\n");
+	if (N > 80) {
+		fprintf(stderr, "Warning: Board might not hold on terminal\n");
+		sleep(3);
+	}
 	int i,j;
 	printf("loop %d\n", loop);
 	for (i=0; i<N; i++) {
@@ -23,9 +26,13 @@ void output_board(int N, int *board, int ldboard, int loop)
 	}
 }
 
+// same as output_board, but with more arguments 
 void output_block(int M, int N, int *local_board, int ldboard, int loop)
 {
-	if (N > 80) fprintf(stderr, "Warning: Board might not hold on terminal\n");
+	if (N > 80) {
+		fprintf(stderr, "Warning: Board might not hold on terminal\n");
+		sleep(3);
+	}
 	int i,j;
 	printf("loop %d\n", loop);
 	for (i=0; i<M; i++) {
@@ -59,13 +66,14 @@ int generate_initial_board(int N, int *board, int ldboard)
 	return num_alive;
 }
 
-
+// read arguments from command line
 int get_arg(int argc,char** argv,int* nb_row, int* nb_col)
 {
 	BS = 4096;
 	maxloop = 10;
+	print = 0;
 	char c;
-	while ((c = getopt (argc, argv, "t:r:c:s:")) != -1){
+	while ((c = getopt (argc, argv, "t:r:c:s:p:")) != -1){
 		switch (c) {
 			case 't':
 			maxloop = atoi(optarg);
@@ -82,6 +90,9 @@ int get_arg(int argc,char** argv,int* nb_row, int* nb_col)
 			break;
 			case 's':
 			BS = atoi(optarg);
+			break;
+			case 'p':
+			print = atoi(optarg);
 			break;
 			default:
 			return 1;

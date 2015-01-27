@@ -1,6 +1,7 @@
 #include "mpi.h"
 #include "util.h"
 
+extern int print;
 #define DIMENSION 2
 
 int main(int argc, char* argv[])
@@ -21,7 +22,8 @@ int main(int argc, char* argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &nb_proc);
 
 	get_arg(argc,argv,&nb_row,&nb_col);
-	printf("nb_col = %d, nb_row = %d\n",nb_col, nb_row );
+	if (print && rank == 0)
+		printf("nb_col = %d, nb_row = %d\n",nb_col, nb_row );
 	// Create processus grid
 	int dims[DIMENSION] = {nb_col, nb_row}, periods[DIMENSION] = {1, 1}, reorder = 1;
 	MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, reorder, &grid);
@@ -48,7 +50,8 @@ int main(int argc, char* argv[])
 
 	// Create types for sending local boards
 	MPI_Type_vector(col_block_size, row_block_size, ldboard, MPI_INT, &blocktype2);
-	printf("Created type size %d x %d\n", row_block_size, col_block_size);
+	if (print && rank == 0)
+		printf("Created type size %d x %d\n", row_block_size, col_block_size);
 	MPI_Type_create_resized( blocktype2, 0, sizeof(int), &blocktype);
 	MPI_Type_commit(&blocktype);
 
@@ -65,8 +68,11 @@ int main(int argc, char* argv[])
 		}
 	}
 	// print board before scatter
-	if (rank == 0)
+	if (print && rank == 0){
 		output_board( BS, &(cell(1, 1)), ldboard, 0);
+		printf("Starting number of living cells = %d\n", num_alive);
+	}
+	t1 = mytimer();
 
 	// Scattering board on grid
 	MPI_Scatterv(board + ldboard + 1, counts, disps, blocktype, tmp_board, col_block_size * row_block_size, MPI_INT, 0, MPI_COMM_WORLD);
@@ -80,22 +86,20 @@ int main(int argc, char* argv[])
 	// }
 
 
-	printf("Starting number of living cells = %d\n", num_alive);
-	t1 = mytimer();
 
-	for (loop = 1; loop <= maxloop; loop++) {
+	for (loop = 1; loop < maxloop; loop++) {
 	/*
 		// exchange cells with proc
 		// Send rows
 		MPI_Send(local_board + local_ld + 1, 1, row_type, grid_rank[1]-1, 99, MPI_COMM_WORLD);
 		MPI_Send(local_board + (2 * (local_ld - 1)), 1, row_type, grid_rank[1]+1, 99, MPI_COMM_WORLD);
+ 		// Recv rows
+		MPI_Recv(local_board, 1, row_type, grid_rank[1]-1, 99, MPI_COMM_WORLD, &status);
+		MPI_Recv(local_board + (2 * local_ld - 1), 1, row_type, grid_rank[1]+1, 99, MPI_COMM_WORLD, &status);
+		
 		// Send columns
 		MPI_Send(local_board + local_ld, local_ld, MPI_INT, grid_rank[0]-1, 99, MPI_COMM_WORLD);
 		MPI_Send(local_board + local_ld * col_block_size, local_ld, MPI_INT, grid_rank[0]+1, 99, MPI_COMM_WORLD);
-
-		// Recv rows
-		MPI_Recv(local_board, 1, row_type, grid_rank[1]-1, 99, MPI_COMM_WORLD, &status);
-		MPI_Recv(local_board + (2 * local_ld - 1), 1, row_type, grid_rank[1]+1, 99, MPI_COMM_WORLD, &status);
 		// Recv cols
 		MPI_Recv(local_board, local_ld, MPI_INT, grid_rank[0]-1, 99, MPI_COMM_WORLD, &status);
 		MPI_Recv(local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, grid_rank[0]+1, 99, MPI_COMM_WORLD, &status);
@@ -128,23 +132,25 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	for (int i = 0; i < col_block_size; ++i)
-	{
-		memcpy(tmp_board + row_block_size * i, local_board + local_ld * (i+1) + 1, row_block_size* sizeof(int));
-	}
-
 	// MPI_Reduce(num_alive);
+
+	// Gather tiles on proc 0
+	for (int i = 0; i < col_block_size; ++i)
+		memcpy(tmp_board + row_block_size * i, local_board + local_ld * (i+1) + 1, row_block_size* sizeof(int));
 	MPI_Gatherv(tmp_board,  col_block_size * row_block_size, MPI_INT, board + ldboard + 1, counts, disps, blocktype, 0, MPI_COMM_WORLD);
-	if(rank == 0){
-		output_board( BS, &(cell(1, 1)), ldboard, loop);
-	}
+
 	t2 = mytimer();
 	temps = t2 - t1;
-	printf("Final number of living cells = %d\n", num_alive);
-	printf("time=%.2lf ms\n",(double)temps * 1.e3);
 
-    //output_board( BS, &(cell(1, 1)), ldboard, maxloop);
+	if(print && rank == 0){
+		output_board( BS, &(cell(1, 1)), ldboard, loop);
+		printf("Final number of living cells = %d\n", num_alive);
+		printf("time=%.2lf ms\n",(double)temps * 1.e3);
+	}
 
+	free(tmp_board);
+	free(local_board);
+	free(local_ngb);
 	free(board);
 	free(nbngb);
 	MPI_Finalize();

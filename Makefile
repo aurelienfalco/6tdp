@@ -14,6 +14,7 @@ nr = 2
 nc = 3
 t = 10
 s = 4096
+p = 0
 
 all: life_$(v)
 
@@ -27,10 +28,10 @@ life_pthread:%: %.c util.o
 	$(CC) $(CFLAGS) $^ -o $@ -lpthread
 
 $(VERSION):%: life_%
-	./$< -t $(t) -s $(s)
+	./$< -t $(t) -s $(s) -p $(p)
 
 mpi:%: life_%
-	n=$(shell echo $(nr)\*$(nc) | bc); mpiexec -np $${n} $< -t $(t) -r $(nr) -c $(nc) -s $(s)
+	n=$(shell echo $(nr)\*$(nc) | bc); mpiexec -np $${n} $< -t $(t) -r $(nr) -c $(nc) -s $(s) -p $(p)
 
 exec: $(v)
 

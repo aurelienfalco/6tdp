@@ -1,0 +1,32 @@
+Version OpenMP
+Commencez par paralléliser le code fourni à l’aide de directives OpenMP. Attention, vérifiez bien que le nombre de cellules vivantes reste bien toujours le même d’une exécution à l’autre, sinon c’est qu’il y a un problème de partage de variable entre threads ou bien un problème de dépendance de données (remarquez bien que le calcul de chaque nouvel élément de board dépend du calcul des nbngb des voisins, il y a donc des dépendances aux frontières entre morceaux de domaines, on ne peut pas utiliser de clause nowait!)
+Voici quelques questions qui pourront vous guider
+Vaut-il mieux paralléliser à la fois les boucles en i et en j, ou seulement une des deux dimensions (et laquelle)? Pourquoi?
+Le travail des threads est-il équilibré?
+Le caractère NUMA de la machine influe-t-il sur les performances? Est-il intéressant de fixer les threads sur un coeur de calcul?
+A-t-on intérêt à utiliser l’hyperthreading si il est présent?
+Le caractère privée/partagée des variables influe-t-il sur les performances?
+Enfin, il peut être possible d’améliorer le rendement du cache en utilisant une technique de pavage à l’aide de macro-cellules. Discutez de l’intérêt de cette technique pour le jeu de la vie en fonction du nombre de threads utilisés, de la taille du problème et des caractéristiques du processeur visé.
+Version pthread
+Dans la version OpenMP, la directive pragma openmp for effectue une barrière de synchronisation globale. C’est certes simple à implémenter, mais c’est abusif: les threads n’ont vraiment besoin de se synchroniser qu’avec les threads voisins. On atteint ici les limites de la facilité d’expressivité d’OpenMP.
+Ecrivez donc une version utilisant des pthreads. Il vous faudra déplacer le code de la boucle depuis main le vers une fonction qui sera exécutée par chaque thread. main se chargera désormais de créer un certain nombre de threads, chacun exécutant la boucle sur une portion du tableau board. Pour synchroniser les threads entre eux et pour respecter les dépendances de données, vous pourrez utiliser des mutex/sémaphores. Note: n’hésitez pas à utiliser de nombreux mutex/sémaphores, sinon vous risquez de rencontrer des scénarios d’interblocage ou de sérialisation.
+Raffinement
+En y regardant de plus près, on peut s’apercevoir que cette synchronisation pourrait être scindée en deux temps si chaque thread pouvait distinguer le calcul des cellules « intérieures » à sa zone du calcul des cellules sur les bords (qui devront par conséquent attendre des résultats des voisins et du centre). Ainsi, à chaque itération, chaque thread pourrait d’abord calculer les bords de sa zone, puis signaler qu’il a terminé ce calcul, puis calculer l’intérieur et enfin attendre que ses voisins aient terminé leurs bordures respectives.
+Quel est l’intérêt d’une telle décomposition de la synchronisation? Modifiez votre code en conséquence.
+Version mémoire distribuée: MPI
+Nous nous intéressons maintenant à l’implémentation d’une version MPI du jeu de la vie, pour tirer parti de plusieurs noeuds du cluster plafrim et de son réseau Infiniband. On pourra bien sûr garder sous les yeux les pages de man de ces fonctions MPI, mais sur http://mpi.deino.net/mpi/mpi_functions/ la documentation est plus fournie et d’autres exemples de codes sont disponibles. Une documentation très détaillée est disponible sur http://www.netlib.org/utk/papers/mpi-book/mpi-book.html.
+Pour l’instant faisons simple: un seul thread par machine.
+Chaque noeud va devoir traiter une portion du tableau board. Les processus MPI voisins devront s’échanger les résultats obtenus sur les frontières de leurs portions avant de passer à l’étape suivante.
+Communications synchrones
+Dans un premier temps, on souhaite tester une version basée sur un découpage similaire à l’approche OpenMP. Ecrivez une version utilisant des processus MPI, et dont les bords sont échangés par le biais de la fonction . Rq: les topologies MPI peuvent permettre de faciliter le découpage et les communications.
+Communications Asynchrones
+Cette première version comme la version OpenMP est limitée par les synchronisations qui apparaissent aux bord. Une solution consistent à faire du recouvrement calculs/communications en essayant de recouvrir la communication des bords par le calcul de la partie centrale. Modifiez la version précédente pour exploitez les communications asynchrones pour permettre ce recouvrement.
+Communications Persistantes
+On s’aperçoit rapidement que l’implémentation de ce problème repose sur un ensemble de communication qui est répété à l’identique à chaque étape de calcul. Pour éviter de devoir recalculer les données d’entête et de placement des données à chaque envoi, MPI propose des communications persistantes que l’on peut relancer autant de fois que
+nécessaire. Modifiez la version précédente pour utiliser des communications persistantes en remplacement des appels asynchrones.
+Comparez l’ensemble des versions implémentées, en mémoire partagée et distribuée, sur un noeuds de calcul, et sur plusieurs pour les versions MPI.
+Remarque
+Selon la répartition initiale des cellules, il arrive que l’état de toute une zone reste inchangé après une étape de calcul (lorsqu’il n’y a aucune cellule vivante, par exemple). Cette zone ne changera donc plus tant que les bordures ne changeront pas non plus. Pour de telles zones, on peut économiser du temps de calcul en ne faisant simplement rien!
+Est-ce que le temps de calcul global de la simulation va s’en trouver accéléré ? Discutez en fonction du nombre de threads par rapport au nombre de processeurs et du jeu de données.
+Il peut découler de ce phénomène des irrégularités entre les temps de calcul des différentes portions de tableau. En particulier, si le contenu d’une portion ne change pas à l’étape i, calculer cette même portion à l’étape i+1 demandera peu d’effort car dans ce cas seules les frontières sont à recalculer. Certains coeurs peuvent donc se retrouver inactifs alors que d’autres n’ont pas fini leur travail.
+Discutez (sans coder) de l’élaboration d’un procédé pour répartir efficacement la charge sur le cluster de machines Infini.
