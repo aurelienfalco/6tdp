@@ -5,9 +5,8 @@ VERSION = seq omp omp-bloc pthread
 # which version to run. Must be chosen from VERSION list and mpi
 v = mpi
 
-ALG = $(v)
-SRC=$(ALG:=.c)
-OBJ=$(SRC:.c=.o)
+INC = util common
+OBJ = $(INC:=.o)
 CFLAGS = -std=c99 -g -O0 -Wall -Wextra
 n = 6
 nr = 2
@@ -18,13 +17,13 @@ p = 0
 
 all: life_$(v)
 
-life_om%: life_om%.c util.o
+life_om%: life_om%.c $(OBJ)
 	$(CC) $(CFLAGS) -fopenmp $^ -o $@
 
-life_%: life_%.c util.o
+life_%: life_%.c $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@
 
-life_pthread:%: %.c util.o
+life_pthread:%: %.c $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lpthread
 
 $(VERSION):%: life_%

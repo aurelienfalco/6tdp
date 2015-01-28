@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	board = malloc( ldboard * ldboard * sizeof(int) );
 	nbngb = malloc( ldnbngb * ldnbngb * sizeof(int) );
 
-	num_alive = generate_initial_board( BS, &(cell(1, 1)), ldboard );
+	num_alive = generate_initial_board( BS, &(cell(0, 0)), ldboard );
 
 	printf("Starting number of living cells = %d\n", num_alive);
 	if (print)
