@@ -46,6 +46,23 @@ void output_block(int M, int N, int *local_board, int ldboard, int loop)
 	}
 }
 
+// same as output_board, but with more arguments 
+void output_ngb(int M, int N, int *local_board, int ldboard, int loop)
+{
+	if (N > 80) {
+		fprintf(stderr, "Warning: Board might not hold on terminal\n");
+		sleep(3);
+	}
+	int i,j;
+	printf("loop %d\n", loop);
+	for (i=0; i<M; i++) {
+		for (j=0; j<N; j++) {
+			printf("%d ",cell_ld(local_board, i, j, ldboard ));
+		}
+		printf("\n");
+	}
+}
+
 
 int generate_initial_board(int N, int *board, int ldboard)
 {

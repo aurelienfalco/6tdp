@@ -57,12 +57,13 @@ int main(int argc, char* argv[])
 		}
 	}
 	// print board before scatter
-	if (print && rank == 0){
-		output_board( BS, &(cell(1, 1)), ldboard, 0);
+	if (rank == 0) {
 		printf("Starting number of living cells = %d\n", num_alive);
+		if (print){
+			output_board( BS, &(cell(1, 1)), ldboard, 0);
+		}
 	}
-	
-	t1 = mytimer();
+
 
 	// Scattering board on grid
 	MPI_Scatterv(board + ldboard + 1, counts, disps, blocktype, tmp_board, col_block_size * row_block_size, MPI_INT, 0, MPI_COMM_WORLD);
@@ -71,43 +72,62 @@ int main(int argc, char* argv[])
 	{
 		memcpy(local_board + local_ld * (i+1) + 1, tmp_board + row_block_size * i, row_block_size* sizeof(int));
 	}
-	// if (grid_rank[1] == 0){
-		// cell_ld(local_board, row_block_size/2, col_block_size/2, local_ld) = 1;
-	// }
+
+	t1 = mytimer();
+	// get rank of neighbours
+	int left_proc, right_proc, up_proc, down_proc;
+	int coords[2] = {grid_rank[0]-1, grid_rank[1]};
+
+	MPI_Cart_rank(grid, coords, &left_proc);
+	coords[0] = grid_rank[0] + 1;
+	MPI_Cart_rank(grid, coords, &right_proc);
+	coords[0] = grid_rank[0];
+	coords[1] = grid_rank[1] - 1;
+	MPI_Cart_rank(grid, coords, &up_proc);
+	coords[1] = grid_rank[1] + 1;
+	MPI_Cart_rank(grid, coords, &down_proc);
+
+	// printf("left/right %d %d %d at positions %d %d, %d %d, %d %d\n", left_proc, rank, right_proc, grid_rank[1], grid_rank[0]-1, grid_rank[1], grid_rank[0],grid_rank[1], grid_rank[0]+1);
+
+	for (loop = 1; loop <= maxloop; loop++) {
+		// share border rows up and down
+		// if (rank == 2)
+		// output_block(row_block_size, col_block_size, local_board, local_ld, rank);
+		MPI_Sendrecv(local_board + local_ld + 1, 1, row_type, up_proc, 99, local_board + (2 * local_ld - 1), 1, row_type, down_proc, 99, grid, &status);
+
+		MPI_Sendrecv(local_board + (2 * local_ld - 2), 1, row_type, down_proc, 99, local_board + local_ld, 1, row_type, up_proc, 99, grid, &status);
+
+		// send columns
+		MPI_Sendrecv(local_board + local_ld, local_ld, MPI_INT, left_proc, 99, local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, right_proc, 99, grid, &status);
+
+		MPI_Sendrecv(local_board + local_ld * col_block_size, local_ld, MPI_INT, right_proc, 99, local_board, local_ld, MPI_INT, left_proc, 99, grid, &status);
 
 
-
-	for (loop = 1; loop < maxloop; loop++) {
 	/*
-		// exchange cells with proc
-		// Send rows
-		MPI_Send(local_board + local_ld + 1, 1, row_type, grid_rank[1]-1, 99, MPI_COMM_WORLD);
-		MPI_Send(local_board + (2 * (local_ld - 1)), 1, row_type, grid_rank[1]+1, 99, MPI_COMM_WORLD);
- 		// Recv rows
-		MPI_Recv(local_board, 1, row_type, grid_rank[1]-1, 99, MPI_COMM_WORLD, &status);
-		MPI_Recv(local_board + (2 * local_ld - 1), 1, row_type, grid_rank[1]+1, 99, MPI_COMM_WORLD, &status);
-		
 		// Send columns
-		MPI_Send(local_board + local_ld, local_ld, MPI_INT, grid_rank[0]-1, 99, MPI_COMM_WORLD);
-		MPI_Send(local_board + local_ld * col_block_size, local_ld, MPI_INT, grid_rank[0]+1, 99, MPI_COMM_WORLD);
+		MPI_Send(local_board + local_ld, local_ld, MPI_INT, left_proc, 99, MPI_COMM_WORLD);
+		MPI_Send(local_board + local_ld * col_block_size, local_ld, MPI_INT, right_proc, 99, MPI_COMM_WORLD);
 		// Recv cols
-		MPI_Recv(local_board, local_ld, MPI_INT, grid_rank[0]-1, 99, MPI_COMM_WORLD, &status);
-		MPI_Recv(local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, grid_rank[0]+1, 99, MPI_COMM_WORLD, &status);
+		MPI_Recv(local_board, local_ld, MPI_INT, left_proc, 99, MPI_COMM_WORLD, &status);
+		MPI_Recv(local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, right_proc, 99, MPI_COMM_WORLD, &status);
 		/**/
 
-		for (j = 1; j <= row_block_size; j++) {
-			for (i = 1; i <= col_block_size; i++) {
-				ngb_ld(local_ngb, i, j, row_block_size ) =
+		for (j = 1; j <= col_block_size; j++) {
+			for (i = 1; i <= row_block_size; i++) {
+				ngb_ld(local_ngb, i, j, row_block_size ) = 
 				cell_ld(local_board, i-1, j-1, local_ld ) + cell_ld(local_board, i, j-1, local_ld ) + cell_ld(local_board, i+1, j-1, local_ld ) +
 				cell_ld(local_board, i-1, j, local_ld ) + cell_ld(local_board, i+1, j, local_ld ) +
 				cell_ld(local_board, i-1, j+1, local_ld ) + cell_ld(local_board, i, j+1, local_ld ) + cell_ld(local_board, i+1, j+1, local_ld );
+				// printf("%d ", ngb_ld(local_ngb, i, j, row_block_size ));
 			}
+			// printf("\n");
 		}
 
+		
 		num_alive = 0;
-	// #pragma omp parallel for private(i,j) reduction(+:num_alive)
-		for (j = 1; j <= row_block_size; j++) {
-			for (i = 1; i <= col_block_size; i++) {
+		// #pragma omp parallel for private(i,j) reduction(+:num_alive)
+		for (j = 1; j <= col_block_size; j++) {
+			for (i = 1; i <= row_block_size; i++) {
 				if ( (ngb_ld(local_ngb, i, j, row_block_size ) < 2) || (ngb_ld(local_ngb, i, j, row_block_size ) > 3) ) {
 					cell_ld(local_board,i, j, local_ld) = 0;
 				}
@@ -120,6 +140,7 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
+		
 	}
 
 	// MPI_Reduce(num_alive);
@@ -131,9 +152,10 @@ int main(int argc, char* argv[])
 
 	t2 = mytimer();
 	temps = t2 - t1;
-
-	if(print && rank == 0){
-		output_board( BS, &(cell(1, 1)), ldboard, loop);
+	if (rank == 0){
+		if(print ){
+			output_board( BS, &(cell(1, 1)), ldboard, maxloop);
+		}
 		printf("Final number of living cells = %d\n", num_alive);
 		printf("time=%.2lf ms\n",(double)temps * 1.e3);
 	}

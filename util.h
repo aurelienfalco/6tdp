@@ -21,6 +21,7 @@ int get_arg(int argc,char** argv,int* nb_row, int* nb_col);
 double mytimer(void);
 void output_board(int N, int *board, int ldboard, int loop);
 void output_block(int M, int N, int *board, int ldboard, int loop);
+void output_ngb(int M, int N, int *local_board, int ldboard, int loop);
 int generate_initial_board(int N, int *board, int ldboard);
 
 #endif
