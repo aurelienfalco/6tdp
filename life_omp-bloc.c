@@ -5,7 +5,7 @@ int BLOCK_SIZE = 64;
 
 int main(int argc, char* argv[])
 {
-	int i, j;
+	int i, j, k, l;
 	double t1, t2;
 	double temps;
 

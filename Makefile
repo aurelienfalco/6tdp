@@ -3,7 +3,8 @@ EX = mpiexec
 
 VERSION = seq omp omp-bloc pthread
 # which version to run. Must be chosen from VERSION list and mpi
-v = mpi
+MPI_VERSION = mpi-synchrone mpi-asynchrone mpi-persistant
+v = mpi-synchrone
 
 INC = util common
 OBJ = $(INC:=.o)
@@ -29,7 +30,7 @@ life_pthread:%: %.c $(OBJ)
 $(VERSION):%: life_%
 	./$< -t $(t) -s $(s) -p $(p)
 
-mpi:%: life_%
+$(MPI_VERSION):%: life_%
 	n=$(shell echo $(nr)\*$(nc) | bc); mpiexec -np $${n} $< -t $(t) -r $(nr) -c $(nc) -s $(s) -p $(p)
 
 exec: $(v)
@@ -43,21 +44,15 @@ qsub: $(v)
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $< -lm
 
-tests: $(OBJ) tests.o
-	$(CC) $(CFLAGS) $^ -o $@ -lm
+%.data: stat-%
 
-test: tests
-	./tests $(N) $(e) $(p)
+stat-%:
+	./stats.sh $(subst stat-,,$@)
 
-stat: $(v)
-	./stats.sh
+stat: $(addprefix stat-,$(VERSION) $(MPI_VERSION))
 
-plot: 
-	@gnuplot -e "name='$(stat)';output='$(stat).png" plot_fox.gp 
-	@eog $(stat).png 2>/dev/null &
-
-plot-sp: 
-	@gnuplot -e "name='Speedup';data='speed.data';output='Speedup.png" plot_sp.gp 
+plot: $(addsuffix .data,$(VERSION) $(MPI_VERSION) )
+	@gnuplot -e "xname='Nombre de processus';name1='OpenMP';data1='seq.data';name2='pthread';data2='pthread.data';name3='MPI synchrone';data3='mpi-synchrone.data';name4='MPI asynchrone';data4='mpi-asynchrone.data';name5='MPI persistant';data5='mpi-persistant.data';output='Speedup.png" plot_sp.gp 
 	@eog Speedup.png 2>/dev/null &
 
 clean:

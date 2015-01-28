@@ -67,7 +67,6 @@ int main(int argc, char* argv[])
 
 	// Scattering board on grid
 	MPI_Scatterv(board + ldboard + 1, counts, disps, blocktype, tmp_board, col_block_size * row_block_size, MPI_INT, 0, MPI_COMM_WORLD);
-
 	for (int i = 0; i < col_block_size; ++i)
 	{
 		memcpy(local_board + local_ld * (i+1) + 1, tmp_board + row_block_size * i, row_block_size* sizeof(int));
@@ -102,28 +101,15 @@ int main(int argc, char* argv[])
 
 		MPI_Sendrecv(local_board + local_ld * col_block_size, local_ld, MPI_INT, right_proc, 99, local_board, local_ld, MPI_INT, left_proc, 99, grid, &status);
 
-
-	/*
-		// Send columns
-		MPI_Send(local_board + local_ld, local_ld, MPI_INT, left_proc, 99, MPI_COMM_WORLD);
-		MPI_Send(local_board + local_ld * col_block_size, local_ld, MPI_INT, right_proc, 99, MPI_COMM_WORLD);
-		// Recv cols
-		MPI_Recv(local_board, local_ld, MPI_INT, left_proc, 99, MPI_COMM_WORLD, &status);
-		MPI_Recv(local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, right_proc, 99, MPI_COMM_WORLD, &status);
-		/**/
-
 		for (j = 1; j <= col_block_size; j++) {
 			for (i = 1; i <= row_block_size; i++) {
 				ngb_ld(local_ngb, i, j, row_block_size ) = 
 				cell_ld(local_board, i-1, j-1, local_ld ) + cell_ld(local_board, i, j-1, local_ld ) + cell_ld(local_board, i+1, j-1, local_ld ) +
 				cell_ld(local_board, i-1, j, local_ld ) + cell_ld(local_board, i+1, j, local_ld ) +
 				cell_ld(local_board, i-1, j+1, local_ld ) + cell_ld(local_board, i, j+1, local_ld ) + cell_ld(local_board, i+1, j+1, local_ld );
-				// printf("%d ", ngb_ld(local_ngb, i, j, row_block_size ));
 			}
-			// printf("\n");
 		}
 
-		
 		num_alive = 0;
 		// #pragma omp parallel for private(i,j) reduction(+:num_alive)
 		for (j = 1; j <= col_block_size; j++) {
@@ -140,10 +126,11 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
+		int num_alive_total;
+		MPI_Reduce(&num_alive, &num_alive_total, 1, MPI_INT, MPI_SUM, 0, grid);
+		num_alive = num_alive_total;
 		
 	}
-
-	// MPI_Reduce(num_alive);
 
 	// Gather tiles on proc 0
 	for (int i = 0; i < col_block_size; ++i)
