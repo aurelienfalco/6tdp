@@ -69,9 +69,6 @@ int generate_initial_board(int N, int *board, int ldboard)
 // read arguments from command line
 int get_arg(int argc,char** argv,int* nb_row, int* nb_col)
 {
-	BS = 4096;
-	maxloop = 10;
-	print = 0;
 	char c;
 	while ((c = getopt (argc, argv, "t:r:c:s:p:")) != -1){
 		switch (c) {

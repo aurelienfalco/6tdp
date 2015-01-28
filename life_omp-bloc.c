@@ -1,34 +1,21 @@
 #include "util.h"
+#include "common.h"
 
 int BLOCK_SIZE = 64;
 
 int main(int argc, char* argv[])
 {
-	int i, j, k, l, loop, num_alive;
-	int ldboard, ldnbngb;
+	int i, j;
 	double t1, t2;
 	double temps;
 
-	int *board;
-	int *nbngb;
-
 	get_arg(argc,argv,NULL,NULL);
-	num_alive = 0;
-
-    /* Leading dimension of the board array */
-	ldboard = BS + 2;
-    /* Leading dimension of the neigbour counters array */
-	ldnbngb = BS;
-
-	board = malloc( ldboard * ldboard * sizeof(int) );
-	nbngb = malloc( ldnbngb * ldnbngb * sizeof(int) );
-
-	num_alive = generate_initial_board( BS, &(cell(1, 1)), ldboard );
+	init();
 
 	printf("Starting number of living cells = %d\n", num_alive);
 	if (print)
 		output_board( BS, &(cell(1, 1)), ldboard, 0 );
-
+	
 	t1 = mytimer();
 
 	for (loop = 1; loop <= maxloop; loop++) {

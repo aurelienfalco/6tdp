@@ -1,15 +1,14 @@
 #include "mpi.h"
 #include "util.h"
+#include "common.h"
 
 extern int print;
 #define DIMENSION 2
 
 int main(int argc, char* argv[])
 {
-	int i, j, loop = 0, num_alive;
-	int ldboard, ldnbngb;
-	int *board, *tmp_board, *local_board, *local_ngb;
-	int *nbngb;
+	int i, j;
+	int *tmp_board, *local_board, *local_ngb;
 	double t1, t2;
 	double temps;
 	int rank, nb_proc, nb_col, nb_row, grid_rank[DIMENSION] = {42, 42};
@@ -22,23 +21,13 @@ int main(int argc, char* argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &nb_proc);
 
 	get_arg(argc,argv,&nb_row,&nb_col);
+	init();
 	if (print && rank == 0)
 		printf("nb_col = %d, nb_row = %d\n",nb_col, nb_row );
 	// Create processus grid
 	int dims[DIMENSION] = {nb_col, nb_row}, periods[DIMENSION] = {1, 1}, reorder = 1;
 	MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, reorder, &grid);
 	MPI_Cart_coords(grid, rank, DIMENSION, grid_rank);
-
-	num_alive = 0;
-    /* Leading dimension of the board array */
-	ldboard = BS + 2;
-    /* Leading dimension of the neigbour counters array */
-	ldnbngb = BS;
-
-	board = malloc( ldboard * ldboard * sizeof(int) );
-	nbngb = malloc( ldnbngb * ldnbngb * sizeof(int) );
-
-	num_alive = generate_initial_board( BS, &(cell(1, 1)), ldboard );
 
 	int col_block_size = ldnbngb / nb_col;
 	int row_block_size = ldnbngb / nb_row;
@@ -72,6 +61,7 @@ int main(int argc, char* argv[])
 		output_board( BS, &(cell(1, 1)), ldboard, 0);
 		printf("Starting number of living cells = %d\n", num_alive);
 	}
+	
 	t1 = mytimer();
 
 	// Scattering board on grid

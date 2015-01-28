@@ -1,11 +1,20 @@
 #include "util.h"
 #include "common.h"
 
-int main(int argc, char* argv[]){
-	int i,j;
-
+int main(int argc, char* argv[])
+{
+	int i, j;
+	double t1, t2;
+	double temps;
+	
 	get_arg(argc,argv,NULL,NULL);
 	init();
+	
+	printf("Starting number of living cells = %d\n", num_alive);
+	if (print)
+		output_board( BS, &(cell(1, 1)), ldboard, 0 );
+	
+	t1 = mytimer();
 
 	for (loop = 1; loop <= maxloop; loop++) {
 
