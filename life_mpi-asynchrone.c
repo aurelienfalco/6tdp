@@ -12,9 +12,9 @@ int main(int argc, char* argv[])
 	double t1, t2;
 	double temps;
 	int rank, nb_proc, nb_col, nb_row, grid_rank[DIMENSION] = {42, 42};
-	MPI_Status status;
 	MPI_Comm grid;
 	MPI_Datatype blocktype, blocktype2, row_type2, row_type;
+	MPI_Request requests[8];
 
 	MPI_Init(NULL,NULL);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -86,20 +86,23 @@ int main(int argc, char* argv[])
 	coords[1] = grid_rank[1] + 1;
 	MPI_Cart_rank(grid, coords, &down_proc);
 
-	// printf("left/right %d %d %d at positions %d %d, %d %d, %d %d\n", left_proc, rank, right_proc, grid_rank[1], grid_rank[0]-1, grid_rank[1], grid_rank[0],grid_rank[1], grid_rank[0]+1);
-
 	for (loop = 1; loop <= maxloop; loop++) {
 		// share border rows up and down
-		// if (rank == 2)
-		// output_block(row_block_size, col_block_size, local_board, local_ld, rank);
-		MPI_Sendrecv(local_board + local_ld + 1, 1, row_type, up_proc, 99, local_board + (2 * local_ld - 1), 1, row_type, down_proc, 99, grid, &status);
 
-		MPI_Sendrecv(local_board + (2 * local_ld - 2), 1, row_type, down_proc, 99, local_board + local_ld, 1, row_type, up_proc, 99, grid, &status);
+		MPI_Isend(local_board + local_ld + 1, 1, row_type, up_proc, 99, grid, &requests[0]);
+		MPI_Isend(local_board + (2 * local_ld - 2), 1, row_type, down_proc, 99, grid, &requests[2]);
+
+		MPI_Irecv(local_board + (2 * local_ld - 1), 1, row_type, down_proc, 99, grid, &requests[1]);
+		MPI_Irecv(local_board + local_ld, 1, row_type, up_proc, 99, grid, &requests[3]);
 
 		// send columns
-		MPI_Sendrecv(local_board + local_ld, local_ld, MPI_INT, left_proc, 99, local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, right_proc, 99, grid, &status);
+		MPI_Isend(local_board + local_ld, local_ld, MPI_INT, left_proc, 99, grid, &requests[4]);
+		MPI_Isend(local_board + local_ld * col_block_size, local_ld, MPI_INT, right_proc, 99, grid, &requests[6]);
 
-		MPI_Sendrecv(local_board + local_ld * col_block_size, local_ld, MPI_INT, right_proc, 99, local_board, local_ld, MPI_INT, left_proc, 99, grid, &status);
+		MPI_Irecv(local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, right_proc, 99, grid, &requests[5]);
+		MPI_Irecv(local_board, local_ld, MPI_INT, left_proc, 99, grid, &requests[7]);
+
+		MPI_Waitall(8,requests,MPI_STATUSES_IGNORE);
 
 		for (j = 1; j <= col_block_size; j++) {
 			for (i = 1; i <= row_block_size; i++) {
