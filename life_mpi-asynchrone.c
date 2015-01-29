@@ -21,7 +21,14 @@ int main(int argc, char* argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &nb_proc);
 
 	get_arg(argc,argv,&nb_row,&nb_col);
+
+	if (rank == 0){
+		CHK_ERR(BS % nb_row, "Warning: %d (size of board) not divisible by %d (number of rows in grid). Results may not be correct.\n", BS, nb_row);
+		CHK_ERR(BS % nb_col, "Warning: %d (size of board) not divisible by %d (number of columns in grid). Results may not be correct.\n", BS, nb_col);
+	}
+
 	init();
+	
 	if (print && rank == 0)
 		printf("nb_col = %d, nb_row = %d\n",nb_col, nb_row );
 	// Create processus grid
@@ -102,10 +109,8 @@ int main(int argc, char* argv[])
 		MPI_Irecv(local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, right_proc, 99, grid, &requests[5]);
 		MPI_Irecv(local_board, local_ld, MPI_INT, left_proc, 99, grid, &requests[7]);
 
-		MPI_Waitall(8,requests,MPI_STATUSES_IGNORE);
-
-		for (j = 1; j <= col_block_size; j++) {
-			for (i = 1; i <= row_block_size; i++) {
+		for (j = 2; j < col_block_size; j++) {
+			for (i = 2; i < row_block_size; i++) {
 				ngb_ld(local_ngb, i, j, row_block_size ) = 
 				cell_ld(local_board, i-1, j-1, local_ld ) + cell_ld(local_board, i, j-1, local_ld ) + cell_ld(local_board, i+1, j-1, local_ld ) +
 				cell_ld(local_board, i-1, j, local_ld ) + cell_ld(local_board, i+1, j, local_ld ) +
@@ -113,8 +118,10 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		MPI_Waitall(8,requests,MPI_STATUSES_IGNORE);
+
+
 		num_alive = 0;
-		// #pragma omp parallel for private(i,j) reduction(+:num_alive)
 		for (j = 1; j <= col_block_size; j++) {
 			for (i = 1; i <= row_block_size; i++) {
 				if ( (ngb_ld(local_ngb, i, j, row_block_size ) < 2) || (ngb_ld(local_ngb, i, j, row_block_size ) > 3) ) {

@@ -1,5 +1,9 @@
 #include "util.h"
 
+int maxloop = 10; // number of iterations
+int print = 0; // a boolean to print outputs
+int n = 4;
+
 double mytimer(void)
 {
 	struct timeval tp;
@@ -87,7 +91,7 @@ int generate_initial_board(int N, int *board, int ldboard)
 int get_arg(int argc,char** argv,int* nb_row, int* nb_col)
 {
 	char c;
-	while ((c = getopt (argc, argv, "t:r:c:s:p:")) != -1){
+	while ((c = getopt (argc, argv, "t:r:c:n:s:p:")) != -1){
 		switch (c) {
 			case 't':
 			maxloop = atoi(optarg);
@@ -101,6 +105,9 @@ int get_arg(int argc,char** argv,int* nb_row, int* nb_col)
 			if (nb_col != NULL)
 				*nb_col = atoi(optarg);
 			else return 1;
+			break;
+			case 'n':
+			n = atoi(optarg);
 			break;
 			case 's':
 			BS = atoi(optarg);

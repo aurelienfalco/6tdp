@@ -6,8 +6,7 @@ int ldboard, ldnbngb;
 int *board;
 int *nbngb;
 int BS = 4096; // size of the problem
-int maxloop = 10; // number of iterations
-int print = 0; // a boolean to print outputs
+
 
 void init(){
 	num_alive = 0;

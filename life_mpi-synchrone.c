@@ -12,16 +12,23 @@ int main(int argc, char* argv[])
 	double t1, t2;
 	double temps;
 	int rank, nb_proc, nb_col, nb_row, grid_rank[DIMENSION] = {42, 42};
-	MPI_Status status;
 	MPI_Comm grid;
 	MPI_Datatype blocktype, blocktype2, row_type2, row_type;
+	MPI_Status status;
 
 	MPI_Init(NULL,NULL);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &nb_proc);
 
 	get_arg(argc,argv,&nb_row,&nb_col);
+
+	if (rank == 0){
+		CHK_ERR(BS % nb_row, "Warning: %d (size of board) not divisible by %d (number of rows in grid of procs). Results may not be correct.\n", BS, nb_row);
+		CHK_ERR(BS % nb_col, "Warning: %d (size of board) not divisible by %d (number of columns in grid of procs). Results may not be correct.\n", BS, nb_col);
+	}
+
 	init();
+
 	if (print && rank == 0)
 		printf("nb_col = %d, nb_row = %d\n",nb_col, nb_row );
 	// Create processus grid
@@ -64,7 +71,6 @@ int main(int argc, char* argv[])
 		}
 	}
 
-
 	// Scattering board on grid
 	MPI_Scatterv(board + ldboard + 1, counts, disps, blocktype, tmp_board, col_block_size * row_block_size, MPI_INT, 0, MPI_COMM_WORLD);
 	for (int i = 0; i < col_block_size; ++i)
@@ -73,6 +79,7 @@ int main(int argc, char* argv[])
 	}
 
 	t1 = mytimer();
+
 	// get rank of neighbours
 	int left_proc, right_proc, up_proc, down_proc;
 	int coords[2] = {grid_rank[0]-1, grid_rank[1]};
@@ -86,17 +93,14 @@ int main(int argc, char* argv[])
 	coords[1] = grid_rank[1] + 1;
 	MPI_Cart_rank(grid, coords, &down_proc);
 
-	// printf("left/right %d %d %d at positions %d %d, %d %d, %d %d\n", left_proc, rank, right_proc, grid_rank[1], grid_rank[0]-1, grid_rank[1], grid_rank[0],grid_rank[1], grid_rank[0]+1);
 
 	for (loop = 1; loop <= maxloop; loop++) {
 		// share border rows up and down
-		// if (rank == 2)
-		// output_block(row_block_size, col_block_size, local_board, local_ld, rank);
 		MPI_Sendrecv(local_board + local_ld + 1, 1, row_type, up_proc, 99, local_board + (2 * local_ld - 1), 1, row_type, down_proc, 99, grid, &status);
 
 		MPI_Sendrecv(local_board + (2 * local_ld - 2), 1, row_type, down_proc, 99, local_board + local_ld, 1, row_type, up_proc, 99, grid, &status);
 
-		// send columns
+		// share border columns up and down
 		MPI_Sendrecv(local_board + local_ld, local_ld, MPI_INT, left_proc, 99, local_board + local_ld * (col_block_size+1), local_ld, MPI_INT, right_proc, 99, grid, &status);
 
 		MPI_Sendrecv(local_board + local_ld * col_block_size, local_ld, MPI_INT, right_proc, 99, local_board, local_ld, MPI_INT, left_proc, 99, grid, &status);
@@ -111,7 +115,6 @@ int main(int argc, char* argv[])
 		}
 
 		num_alive = 0;
-		// #pragma omp parallel for private(i,j) reduction(+:num_alive)
 		for (j = 1; j <= col_block_size; j++) {
 			for (i = 1; i <= row_block_size; i++) {
 				if ( (ngb_ld(local_ngb, i, j, row_block_size ) < 2) || (ngb_ld(local_ngb, i, j, row_block_size ) > 3) ) {

@@ -9,11 +9,12 @@ v = mpi-synchrone
 INC = util common
 OBJ = $(INC:=.o)
 CFLAGS = -std=c99 -g -O0 -Wall -Wextra
-n = 6
+n = 4
+np = 6
 nr = 2
 nc = 3
 t = 10
-s = 4096
+s = 3600
 p = 0
 
 all: life_$(v)
@@ -28,10 +29,10 @@ life_pthread:%: %.c $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lpthread
 
 $(VERSION):%: life_%
-	./$< -t $(t) -s $(s) -p $(p)
+	./$< -t $(t) -s $(s) -p $(p) -n $(n)
 
 $(MPI_VERSION):%: life_%
-	n=$(shell echo $(nr)\*$(nc) | bc); mpiexec -np $${n} $< -t $(t) -r $(nr) -c $(nc) -s $(s) -p $(p)
+	np=$(shell echo $(nr)\*$(nc) | bc); mpiexec -np $${np} $< -t $(t) -r $(nr) -c $(nc) -s $(s) -p $(p)
 
 exec: $(v)
 

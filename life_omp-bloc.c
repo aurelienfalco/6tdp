@@ -11,6 +11,7 @@ int main(int argc, char* argv[])
 
 	get_arg(argc,argv,NULL,NULL);
 	init();
+	omp_set_num_threads(n);
 
 	printf("Starting number of living cells = %d\n", num_alive);
 	if (print)
