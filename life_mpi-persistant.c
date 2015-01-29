@@ -4,6 +4,12 @@
 
 extern int print;
 #define DIMENSION 2
+#define calc_ngb() do{\
+ngb_ld(local_ngb, i, j, row_block_size ) = \
+cell_ld(local_board, i-1, j-1, local_ld ) + cell_ld(local_board, i, j-1, local_ld ) + cell_ld(local_board, i+1, j-1, local_ld ) + \
+cell_ld(local_board, i-1, j, local_ld ) + cell_ld(local_board, i+1, j, local_ld ) + \
+cell_ld(local_board, i-1, j+1, local_ld ) + cell_ld(local_board, i, j+1, local_ld ) + cell_ld(local_board, i+1, j+1, local_ld ); \
+}while(0)
 
 int main(int argc, char* argv[])
 {
@@ -109,15 +115,34 @@ int main(int argc, char* argv[])
 	MPI_Recv_init(local_board, local_ld, MPI_INT, left_proc, 99, grid, &requests[7]);
 
 	for (loop = 1; loop <= maxloop; loop++) {
-		MPI_Startall(8,requests);
-		MPI_Waitall(8,requests,MPI_STATUSES_IGNORE);
 
-		for (j = 1; j <= col_block_size; j++) {
+		// Start up and down requests
+		MPI_Startall(4,requests);
+
+		for (j = 2; j < col_block_size; j++) {
+			for (i = 2; i < row_block_size/2; i++) {
+				calc_ngb();
+			}
+		}
+
+		MPI_Waitall(4,requests,MPI_STATUSES_IGNORE);
+
+		// Start left and right requests
+		MPI_Startall(4,&requests[4]);
+
+		for (j = 2; j < col_block_size ; j++) {
+			for (i = row_block_size/2; i <= row_block_size; i++) {
+				calc_ngb();
+			}
+			i = 1;
+			calc_ngb();
+		}
+
+		MPI_Waitall(4,&requests[4],MPI_STATUSES_IGNORE);
+
+		for (j = 1; j <= col_block_size ; j+=col_block_size-1) {
 			for (i = 1; i <= row_block_size; i++) {
-				ngb_ld(local_ngb, i, j, row_block_size ) = 
-				cell_ld(local_board, i-1, j-1, local_ld ) + cell_ld(local_board, i, j-1, local_ld ) + cell_ld(local_board, i+1, j-1, local_ld ) +
-				cell_ld(local_board, i-1, j, local_ld ) + cell_ld(local_board, i+1, j, local_ld ) +
-				cell_ld(local_board, i-1, j+1, local_ld ) + cell_ld(local_board, i, j+1, local_ld ) + cell_ld(local_board, i+1, j+1, local_ld );
+				calc_ngb();
 			}
 		}
 

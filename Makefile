@@ -1,7 +1,7 @@
 CC = mpicc
 EX = mpiexec
 
-VERSION = seq omp omp-bloc pthread
+VERSION = seq omp omp-bloc # pthread
 # which version to run. Must be chosen from VERSION list and mpi
 MPI_VERSION = mpi-synchrone mpi-asynchrone mpi-persistant
 v = mpi-synchrone
@@ -9,8 +9,7 @@ v = mpi-synchrone
 INC = util common
 OBJ = $(INC:=.o)
 CFLAGS = -std=c99 -g -O0 -Wall -Wextra
-n = 4
-np = 6
+n = 6
 nr = 2
 nc = 3
 t = 10
@@ -32,7 +31,7 @@ $(VERSION):%: life_%
 	./$< -t $(t) -s $(s) -p $(p) -n $(n)
 
 $(MPI_VERSION):%: life_%
-	np=$(shell echo $(nr)\*$(nc) | bc); mpiexec -np $${np} $< -t $(t) -r $(nr) -c $(nc) -s $(s) -p $(p)
+	n=$(shell echo $(nr)\*$(nc) | bc); mpiexec -np $${n} $< -t $(t) -r $(nr) -c $(nc) -s $(s) -p $(p)
 
 exec: $(v)
 

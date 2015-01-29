@@ -1,3 +1,4 @@
+#include "omp.h"
 #include "util.h"
 #include "common.h"
 
