@@ -4,7 +4,7 @@ EX = mpiexec
 VERSION = seq omp omp-bloc # pthread
 # which version to run. Must be chosen from VERSION list and mpi
 MPI_VERSION = mpi-synchrone mpi-asynchrone mpi-persistant
-v = mpi-synchrone
+v = mpi-asynchrone
 
 INC = util common
 OBJ = $(INC:=.o)
@@ -56,5 +56,5 @@ plot: $(addsuffix .data,$(VERSION) $(MPI_VERSION) )
 	@eog Speedup.png 2>/dev/null &
 
 clean:
-	rm -rf *.o $(v) $(addprefix life_,$(VERSION) mpi) *~
+	rm -rf *.o $(v) $(addprefix life_,$(VERSION) $(MPI_VERSION)) *~ *.png $(addsuffix .data,$(VERSION) $(MPI_VERSION))
 

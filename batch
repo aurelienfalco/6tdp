@@ -1,0 +1,9 @@
+#PBS -N res
+# preciser le temps en heures, minutes, secondes
+#PBS -l walltime=00:10:00
+# nombre de noeuds et de coeurs
+#PBS -l nodes=4:ppn=4
+#PBS -l naccesspolicy=singlejob
+#
+module load compiler/intel/stable mpi/openmpi/1.6.5
+./stats.sh
