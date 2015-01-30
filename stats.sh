@@ -15,6 +15,7 @@ max_proc=16
 n=6
 nr=2
 nc=3
+> ${v}.data
 # while [ "$i" -le "$m" ]; do
 	seq_time=0
 	for j in `seq 1 ${nb_test}`
@@ -45,8 +46,8 @@ nc=3
 						sum_time=$(echo "${time} + ${sum_time}" | bc)
 					done
 					mean=$(echo "scale=6;${seq_time}/${sum_time}" | bc)
-					echo -e "$np \t $mean"
-					echo -e "$np \t $mean" >> ${v}.data
+					echo -e "$np $mean"
+					echo -e "$np $mean" >> ${v}.data
 				fi
 				nc=$(($nc+1))
 			done
@@ -56,6 +57,9 @@ nc=3
 	# i=$(($i+256))
 # done
 sorted=`cat ${v}.data | sort -h`
-# for i in $sorted
-# echo "$sorted"
+# for i in `seq 1 16`
+# do
+# 	times=`echo "$sorted" | grep -w "^$i" | awk '{if($min>$3)}'`
+# 	echo -e "$min\n"
+# done
 echo "$sorted" > ${v}.data
