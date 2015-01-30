@@ -13,12 +13,12 @@ Dans le cas d'\texttt{OpenMP}, on va essayer de paralléliser les boucles de cal
 \begin{figure}[!ht]
 \begin{lstlisting}
 for (j = 1; j <= BS; j++) do
-for (i = 1; i <= BS; i++) do
-ngb( i, j ) =
-cell( i-1, j-1 ) + cell( i, j-1 ) + cell( i+1, j-1 ) +
-cell( i-1, j   ) +                  cell( i+1, j   ) +
-cell( i-1, j+1 ) + cell( i, j+1 ) + cell( i+1, j+1 );
-end do
+	for (i = 1; i <= BS; i++) do
+		ngb( i, j ) =
+			cell( i-1, j-1 ) + cell( i, j-1 ) + cell( i+1, j-1 ) +
+			cell( i-1, j   ) +                  cell( i+1, j   ) +
+			cell( i-1, j+1 ) + cell( i, j+1 ) + cell( i+1, j+1 );
+	end do
 end do
 \end{lstlisting}
 \caption{Boucle calculant le nombre de voisins}
@@ -29,17 +29,17 @@ end do
 \begin{figure}[h!]
 \begin{lstlisting}
 for (j = 1; j <= BS; j++) do
-for (i = 1; i <= BS; i++) do
-if ( (ngb( i, j ) < 2) || (ngb( i, j ) > 3) ) 
-cell(i, j) = 0;
-else 
-if ((ngb( i, j )) == 3)
-cell(i, j) = 1;
-fi
-if (cell(i, j) == 1) 
-num_alive ++;
-fi
-end do
+	for (i = 1; i <= BS; i++) do
+		if ( (ngb( i, j ) < 2) || (ngb( i, j ) > 3) ) then
+			cell(i, j) = 0;
+		else 
+		if ((ngb( i, j )) == 3) then
+			cell(i, j) = 1;
+		fi
+		if (cell(i, j) == 1) then
+			num_alive ++;
+		fi
+	end do
 end do
 \end{lstlisting}
 \caption{Boucle calculant l'état suivant des cellules et comptant le nombre de cellules vivantes}
@@ -55,7 +55,8 @@ end do
 \end{figure}
 
 \paragraph{Pavage}
-Nous avons implémenté une version \texttt{OpenMP} utilisant la notion de \emph{pavage}. Il s'agit de découper les boucles en $N$ plus petites boucles. Le but est de faire correspondre la taille des petites boucles avec la taille du cache, afin de bénéficier de ses performances. 
+\label{pavage}
+Nous avons implémenté une version \texttt{OpenMP} utilisant la notion de \emph{pavage}. Il s'agit de découper les boucles en $N$ plus petites boucles de taille définie $bs$ ($N = BS/bs$). Le but est de faire correspondre la taille des petites boucles avec la taille du cache, afin de bénéficier de ses performances. 
 
 \subsubsection{\texttt{pthread}}
 \label{pthread}
