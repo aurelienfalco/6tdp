@@ -12,7 +12,7 @@ Pour les performances obtenues avec \texttt{pthread}, elle sont similaires à \t
 \label{fig:sp-size}
 \end{figure}
 
-
+Les performances de la version \texttt{MPI} sont moins bonnes que celles des versions multi-thread. Cependant, \texttt{MPI} permet rajouter un nombre illimité de processus et donc de dépasser les accélérations des autres versions. Les trois versions de \texttt{MPI} ont des performances sensiblement identiques car les matrices testées ne sont pas exceptionnellement grandes et le nombre de processsus reste relativement faible comparé à un gros calculateur. Cependant, la version synchrone avec les communications bloquantes reste la moins efficace, puisqu'elle ne fait rien durant ses communications. La différence entre la version asynchrone et la version persistante est la rapidité d'exécution des communications. La version persistante n'a pas besoin de copier les buffers et de préparer les requêtes ; le programme gagne donc un peu de temps, mais cela n'est visible que sur de longues exécutions avec beaucoup de communications.
 
 \begin{figure}[H]
 \centering
@@ -21,6 +21,6 @@ Pour les performances obtenues avec \texttt{pthread}, elle sont similaires à \t
 \label{fig:sp-proc}
 \end{figure}
 
-La meilleure solution est de combiner \texttt{MPI} avec \texttt{OpenMP} ou \texttt{pthread}.
+La meilleure solution est de combiner \texttt{MPI} avec \texttt{OpenMP} ou \texttt{pthread} pour multiplier les gains de performance, puisqu'un processus \texttt{MPI} s'exécute sur un c\oe ur qui peut avoir plusieurs threads.
 
 % section \ (end)

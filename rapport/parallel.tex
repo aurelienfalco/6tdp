@@ -1,6 +1,6 @@
 \section{Implémentation des différentes versions} % (fold)
 \label{sec:diff_rents_versions}
-Dans cette partie, nous allons exposer les différentes versions parallèles du jeu de la vie que nous avons développées. Dans un premier temps, nous allons voir les différentes versions utilisant une mémoire partagée (section \ref{partagee}), puis les version MPI (section \ref{mpi}), utilisant d'abord des communications synchrones, puis des communications asynchrones, et enfin persistantes.
+Dans cette partie, nous allons exposer les différentes versions parallèles du jeu de la vie que nous avons développées. Dans un premier temps, nous allons voir les différentes versions utilisant une mémoire partagée (section \ref{partagee}), puis les version \texttt{MPI} (section \ref{mpi}), utilisant d'abord des communications synchrones, puis des communications asynchrones, et enfin persistantes.
 
 \subsection{Mémoire partagée}
 \label{partagee}
@@ -8,7 +8,7 @@ Dans cette partie, nous allons exposer les différentes versions parallèles du 
 \subsubsection{OpenMP}
 \label{openmp}
 \paragraph{Principe}
-Dans le cas d'OpenMP, on va essayer de paralléliser les boucles de calcul du nombre de voisins et d'actualisation des cellules en fonction du nombre de voisins (exemples \ref{boucle_voisins} et \ref{boucle_actualisation}). Pour cela, on spécifie simplement que l'on veut effectuer les boucles $for$ en parallèle avec l'instruction \ref{omp_parallel}, insérée juste avant les boucles. Dans le cas de l'exemple \ref{boucle_actualisation}, on veut calculer le nombre de cellules vivantes aussi. Pour ce faire, on effectue une réduction, employant l'opérateur addition sur la variable $num\_alive$. 
+Dans le cas d'\texttt{OpenMP}, on va essayer de paralléliser les boucles de calcul du nombre de voisins et d'actualisation des cellules en fonction du nombre de voisins (exemples \ref{boucle_voisins} et \ref{boucle_actualisation}). Pour cela, on spécifie simplement que l'on veut effectuer les boucles $for$ en parallèle avec l'instruction \ref{omp_parallel}, insérée juste avant les boucles. Dans le cas de l'exemple \ref{boucle_actualisation}, on veut calculer le nombre de cellules vivantes aussi. Pour ce faire, on effectue une réduction, employant l'opérateur addition sur la variable $num\_alive$. 
 
 \begin{figure}[h!]
 \begin{lstlisting}
@@ -50,18 +50,19 @@ end do
 	\begin{lstlisting}
 		#pragma omp parallel for private(i,j)
 	\end{lstlisting}
-	\caption{Instruction OpenMP}
+	\caption{Instruction \texttt{OpenMP}}
 	\label{omp_parallel}
 \end{figure}
 
 \paragraph{Pavage}
-Nous avons implémenté une version OpenMP utilisant la notion de \emph{pavage}. Il s'agit de découper les boucles en $N$ plus petites boucles. Le but est de faire correspondre la taille des petites boucles avec la taille du cache, afin de bénéficier de ses performances. 
+Nous avons implémenté une version \texttt{OpenMP} utilisant la notion de \emph{pavage}. Il s'agit de découper les boucles en $N$ plus petites boucles. Le but est de faire correspondre la taille des petites boucles avec la taille du cache, afin de bénéficier de ses performances. 
 
-\subsubsection{pthread}
+\subsubsection{\texttt{pthread}}
 \label{pthread}
 
+La version utilisant \texttt{pthread} découpe le plateau de jeu en plusieurs blocs. On associe un bloc à chaque thread du programme. Chaque thread calcule alors l'étape suivante pour son bloc. Ce découpage pose un problème de synchronisation entre les threads. En effet, si un thread modifie ses cellules alors qu'un autres n'a pas terminé de calculer son nombre de voisins, il est possible qu'il y ait des conflits sur les bords des blocs. La méthode retenue pour empêcher ces conflits est d'utiliser des barrières avec la bibliothèque \texttt{pthread}.
 
-\subsection{Mémoire distribuée: MPI} % (fold)
+\subsection{Mémoire distribuée: \texttt{MPI}} % (fold)
 \label{mpi}
 
 
