@@ -10,12 +10,12 @@ pthread_cond_t barrier_cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t alive_mutex = PTHREAD_MUTEX_INITIALIZER;
 int barrier_count = 0;
 int barrier_id = 0;
-sem_t *sems_neig;
-sem_t *sems_majs;
 pthread_t *threads;
 int nb_threads;
-int threads_per_side;
-int block_size;
+int threads_per_row;
+int threads_per_col;
+int col_block_size;
+int row_block_size;
 
 void barrier() {
     int id;
@@ -36,11 +36,11 @@ void barrier() {
 
 void* start_work(void *param) {
     int loop, i, j, thread_id = (int)param, count, local_alive;
-	int istart = (thread_id / threads_per_side) * block_size + 1;
-	int iend = ((thread_id / threads_per_side) + 1) * block_size;
-	int jstart = (thread_id % threads_per_side) * block_size + 1;
-	int jend = ((thread_id % threads_per_side) + 1) * block_size;
-	int end_num = threads_per_side * block_size;
+	int istart = (thread_id / threads_per_col) * col_block_size + 1;
+	int iend = ((thread_id / threads_per_col) + 1) * col_block_size;
+	int jstart = (thread_id % threads_per_row) * row_block_size + 1;
+	int jend = ((thread_id % threads_per_row) + 1) * row_block_size;
+	int end_num = BS;
 	
     for (loop = 1; loop <= maxloop; loop++) {
         // Chaque proc copie ses données dans les cellules fantomes associées à ses cellules
@@ -73,17 +73,6 @@ void* start_work(void *param) {
 		
 		barrier();
 		
-		/*if (thread_id > 0) {
-			for (i=0; i<BS+2; i++) {
-				for (j=0; j<BS+2; j++) {
-					printf("%d", cell(i, j));
-				}
-				printf("\n");
-			}
-			printf("------------\n");
-			}
-		barrier();*/
-		
 		// Calcul des voisins
  		for (j = jstart; j <= jend; j++) {
  			for (i = istart; i <= iend; i++) {
@@ -114,6 +103,7 @@ void* start_work(void *param) {
 				}
 			}
 		}
+		
 		pthread_mutex_lock(&alive_mutex);
 		num_alive += local_alive;
 		pthread_mutex_unlock(&alive_mutex);
@@ -131,8 +121,9 @@ int main(int argc, char* argv[])
  	get_arg(argc,argv,NULL,NULL);
 	init();
     
+    threads_per_row = 2;
 	nb_threads = n;
-    threads_per_side = sqrt(n);;
+	threads_per_col = nb_threads / threads_per_row;
 	
 	if (print) 
     	output_board( BS, &(cell(1, 1)), ldboard, maxloop);
@@ -141,47 +132,33 @@ int main(int argc, char* argv[])
  	t1 = mytimer();
 	
     threads = malloc(nb_threads * sizeof(pthread_t));
-    sems_neig = malloc(nb_threads * sizeof(sem_t));
-	sems_majs = malloc(nb_threads * sizeof(sem_t));
 
-    block_size = BS / threads_per_side;
+    row_block_size = BS / threads_per_row;
+	col_block_size = BS / threads_per_col;
 	
     for (i = 0; i < nb_threads; i++) {
-        if (sem_init(&sems_majs[i], 0, 0)) {
-			fprintf(stderr, "cannot create semaphore\n");
-			return -1;
-		}
-        if (sem_init(&sems_neig[i], 0, 0)) {
-			fprintf(stderr, "cannot create semaphore\n");
-			return -1;
-		}
 		pthread_create(&threads[i], NULL, start_work, (void*)i);
 	}
 	
 	for (i = 0; i < nb_threads; i++) {
 		pthread_join(threads[i], NULL);
-		sem_destroy(&sems_neig[i]);
-		sem_destroy(&sems_majs[i]);
 	}
-
+	
 	t2 = mytimer();
 	temps = t2 - t1;
 	printf("Final number of living cells = %d\n", num_alive);
 	printf("time=%.2lf ms\n",(double)temps * 1.e3);
-
-	/*for (i=1; i<=BS; i++) {
-		for (j=1; j<=BS; j++) {
-				printf("%d", ngb(i, j));
-		}
-		printf("\n");
-	}*/
 
 	if (print) {
     	output_board( BS, &(cell(1, 1)), ldboard, maxloop);
 		printf("----------------------------\n");
     	output_board( BS+2, &(cell(0, 0)), ldboard, maxloop);
 	}
-
+	
+	pthread_mutex_destroy(&barrier_mutex);
+	pthread_mutex_destroy(&alive_mutex);
+	pthread_cond_destroy(&barrier_cond);
+	free(threads);
 	free(board);
 	free(nbngb);
 	return EXIT_SUCCESS;
