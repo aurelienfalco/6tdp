@@ -1,23 +1,26 @@
 \section{Performances} % (fold)
 \label{sec:perf}
 
-Une série de tests est lancée sur différentes tailles de matrice plusieurs fois, afin d'obtenir des temps d'exécution moyens. Nous avons remarqué que pour des matrices de taille croissantes, des erreurs de calcul apparaissaient. Ainsi, pour des matrics de taille $30 \times 30$, les erreurs commençaient à être significatives dans le calcul du dtrsm (de l'ordre de $0.1$).\\
-Nous avons remarqué que l'algorithme passait beaucoup de temps dans les fonctions de répartition des données sur les processus. Aussi avons-nous comparé les temps de calculs seulement. \\
-La Figure \ref{fig:sp-size} 
+La première version du code améliorée avec \texttt{OpenMP} donne des résultats intéressants, mais possible à améliorer. Quand les blocs deviennent très grands les accès mémoire ralentissent le programme. L'idée est de séparer les calculs en blocs (pavage) pour réduire ces temps d'accès à la mémoire (seconde version \texttt{OpenMP}). Les temps obtenus ne sont pas très concluants. Une autre possibilité disponible avec \texttt{OpenMP} est l'utilisation des tâches. On génère des tâches ayant des tailles de blocs optimales et on exécute ces tâches. Un des avantages d'\texttt{OpenMP} est de pouvoir définir facilement un nombre de threads quelconque.\\
+
+Pour les performances obtenues avec \texttt{pthread}, elle sont similaires à \texttt{OpenMP} pour le même nombre de threads. En effet, les deux versions utilisent le même type de ressources pour améliorer le temps de calcul. Le programme \texttt{pthread} actuel utilise des barrières pour s'assurer que les calculs précédents ont été effectués (à la façon d'\texttt{OpenMP}). Il est possible, avec un sémaphore par thread, de limiter les attentes à la terminaison des blocs adjacents et ainsi pour voir commencer l'étape suivante alors que certains threads n'ont pas terminé la précédente. Comme le nombre de threads disponibles sur un processeur ne peut pas dépasser une certaine valeur, il est plus intéressant (dans le cas des sémaphores) d'utiliser des blocs colonnes (car les matrices sont stockées en colonne dans notre projet). Enfin les blocs de threads ayant une taille dépendant de la matrice, il faudrait découper ces blocs en sous-blocs pour pouvoir optimiser les accès à la mémoire.
 
 \begin{figure}[H]
 \centering
 % \includegraphics[width=0.8\textwidth]{sp-size.png}
-\caption{Accélération de notre programme par rapport au code séquentiel pour une matrice 1024x1024, en fonction du nombre de processeurs}
+\caption{Speed up des versions multi-thread}
 \label{fig:sp-size}
 \end{figure}
 
-Comme l'indique la courbe de la Fig. \ref{fig:sp-proc}, le nombre de processeurs permet de réduire le temps d'exécution. Cette courbe a été tracée sur des matrices de dimensions $1024\times1024$
+
+
 \begin{figure}[H]
 \centering
 % \includegraphics[width=0.8\textwidth]{sp-proc.png}
-\caption{Accélération de notre programme par rapport au code séquentiel pour une matrice 1024x1024, en fonction du nombre de processeurs}
+\caption{Speed up des versions multi-processus}
 \label{fig:sp-proc}
 \end{figure}
+
+La meilleure solution est de combiner \texttt{MPI} avec \texttt{OpenMP} ou \texttt{pthread}.
 
 % section \ (end)

@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <semaphore.h>
+#include <math.h>
 
 #include "util.h"
 #include "common.h"
@@ -126,12 +127,12 @@ int main(int argc, char* argv[])
  	int i, j;
  	double t1, t2;
  	double temps;
-    
-    threads_per_side = 2;
-	nb_threads = threads_per_side * threads_per_side;
  	
  	get_arg(argc,argv,NULL,NULL);
 	init();
+    
+	nb_threads = n;
+    threads_per_side = sqrt(n);;
 	
 	if (print) 
     	output_board( BS, &(cell(1, 1)), ldboard, maxloop);
