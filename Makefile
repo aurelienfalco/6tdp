@@ -1,9 +1,13 @@
 CC = mpicc
 EX = mpiexec
 
-VERSION = seq omp omp-bloc pthread
+SEQ = seq
+PARTAGEE =  omp omp-bloc pthread
+NO_MPI = $(SEQ) $(PARTAGEE)
 # which version to run. Must be chosen from VERSION list and mpi
 MPI_VERSION = mpi-synchrone mpi-asynchrone mpi-persistant
+PARALLEL = $(PARTAGEE) $(MPI_VERSION)
+ALL = $(SEQ) $(PARALLEL)
 v = mpi-asynchrone
 
 INC = util common
@@ -27,7 +31,7 @@ life_%: life_%.c $(OBJ)
 life_pthread:%: %.c $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lpthread
 
-$(VERSION):%: life_%
+$(NO_MPI):%: life_%
 	./$< -t $(t) -s $(s) -p $(p) -n $(n)
 
 $(MPI_VERSION):%: life_%
@@ -49,12 +53,12 @@ qsub: $(v)
 stat-%:
 	./stats.sh $(subst stat-,,$@)
 
-stat: $(addprefix stat-,$(VERSION) $(MPI_VERSION))
+stat: $(addprefix stat-,$(PARALLEL))
 
-plot: $(addsuffix .data,$(VERSION) $(MPI_VERSION) )
+plot: $(addsuffix .data,$(PARALLEL) )
 	@gnuplot -e "xname='Nombre de processus';name1='OpenMP';data1='seq.data';name2='pthread';data2='pthread.data';name3='MPI synchrone';data3='mpi-synchrone.data';name4='MPI asynchrone';data4='mpi-asynchrone.data';name5='MPI persistant';data5='mpi-persistant.data';output='Speedup.png" plot_sp.gp 
 	@eog Speedup.png 2>/dev/null &
 
 clean:
-	rm -rf *.o $(v) $(addprefix life_,$(VERSION) $(MPI_VERSION)) *~ *.png $(addsuffix .data,$(VERSION) $(MPI_VERSION))
+	rm -rf *.o $(v) $(addprefix life_,$(PARALLEL)) *~ *.png $(addsuffix .data,$(PARALLEL))
 

@@ -7,7 +7,7 @@ fi
 
 
 
-i=1024
+i=3600
 m=4096
 nb_test=5
 np=2
@@ -45,15 +45,15 @@ nc=3
 						sum_time=$(echo "${time} + ${sum_time}" | bc)
 					done
 					mean=$(echo "scale=6;${seq_time}/${sum_time}" | bc)
-					echo "$np $mean"
-					echo "$np $mean" >> ${v}.data
+					echo -e "$np \t $mean"
+					echo -e "$np \t $mean" >> ${v}.data
 				fi
 				nc=$(($nc+1))
 			done
 		fi
 		nr=$(($nr+1))
 	done
-	# echo "$mean_time2"
 	# i=$(($i+256))
-	np=$(($np+2))
 # done
+sorted=`cat ${v}.data | sort -h`
+echo "$sorted" > ${v}.data
