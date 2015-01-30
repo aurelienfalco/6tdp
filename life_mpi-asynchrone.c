@@ -27,7 +27,14 @@ int main(int argc, char* argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &nb_proc);
 
 	get_arg(argc,argv,&nb_row,&nb_col);
+
+	if (rank == 0){
+		CHK_ERR(BS % nb_row, "Warning: %d (size of board) not divisible by %d (number of rows in grid of procs). Results may not be correct.\n", BS, nb_row);
+		CHK_ERR(BS % nb_col, "Warning: %d (size of board) not divisible by %d (number of columns in grid of procs). Results may not be correct.\n", BS, nb_col);
+	}
+
 	init();
+
 	if (print && rank == 0)
 		printf("nb_col = %d, nb_row = %d\n",nb_col, nb_row );
 	// Create processus grid
@@ -135,7 +142,6 @@ int main(int argc, char* argv[])
 
 
 		num_alive = 0;
-		// #pragma omp parallel for private(i,j) reduction(+:num_alive)
 		for (j = 1; j <= col_block_size; j++) {
 			for (i = 1; i <= row_block_size; i++) {
 				if ( (ngb_ld(local_ngb, i, j, row_block_size ) < 2) || (ngb_ld(local_ngb, i, j, row_block_size ) > 3) ) {

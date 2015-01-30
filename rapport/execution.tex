@@ -5,22 +5,31 @@ La première version du code améliorée avec \texttt{OpenMP} donne des résulta
 
 Pour les performances obtenues avec \texttt{pthread}, elle sont similaires à \texttt{OpenMP} pour le même nombre de threads. En effet, les deux versions utilisent le même type de ressources pour améliorer le temps de calcul. Le programme \texttt{pthread} actuel utilise des barrières pour s'assurer que les calculs précédents ont été effectués (à la façon d'\texttt{OpenMP}). Il est possible, avec un sémaphore par thread, de limiter les attentes à la terminaison des blocs adjacents et ainsi pour voir commencer l'étape suivante alors que certains threads n'ont pas terminé la précédente. Comme le nombre de threads disponibles sur un processeur ne peut pas dépasser une certaine valeur, il est plus intéressant (dans le cas des sémaphores) d'utiliser des blocs colonnes (car les matrices sont stockées en colonne dans notre projet). Enfin les blocs de threads ayant une taille dépendant de la matrice, il faudrait découper ces blocs en sous-blocs pour pouvoir optimiser les accès à la mémoire.
 
-\begin{figure}[H]
-\centering
-% \includegraphics[width=0.8\textwidth]{sp-size.png}
-\caption{Speed up des versions multi-thread}
-\label{fig:sp-size}
-\end{figure}
 
-
-
-\begin{figure}[H]
+\begin{figure}[h!]
 \centering
 % \includegraphics[width=0.8\textwidth]{sp-proc.png}
 \caption{Speed up des versions multi-processus}
 \label{fig:sp-proc}
 \end{figure}
 
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.8\textwidth]{speedup-thread.png}
+\caption{Speed up des versions à mémoire partagée}
+\label{fig:sp-thread}
+\end{figure}
+
 La meilleure solution est de combiner \texttt{MPI} avec \texttt{OpenMP} ou \texttt{pthread}.
 
-% section \ (end)
+
+\section{Discussion} % (fold)
+\label{sec:discussion}
+
+Le sujet évoquait le problème de charge inégale des calculs. En effet, dans certaines zones du plateau de jeu, il peut y avoir très peu de calcul. Lorsque, entre deux pas de la variable $loop$, il n'y a pas de changement pour une zone, on sait que celle-ci ne changera plus tant que ses bordures ne changent pas (donc lors d'échanges avec ses voisins). Cela permet d'effectuer un peu moins de calcul.
+
+Cependant, dans notre implémentation actuelle, toutes les zones sont censées être calculées en parallèle. Et dans ce cas, qu'une zone ne travaille pas alors que ses voisins travaillent ne change rien en terme de temps d'exécution, bien que certains processus puissent se ``reposer'' un peu. 
+
+Si les processus et threads pouvaient se répartir mieux la charge de travail, on pourrait par contre gagner en performances. Plusieurs procédés existent pour cela, que nous avons pu voir au travers des différents TDPs. Le vol de travail permettrait aux processus inactifs de faire quelque chose au lieu d'être inactif, tout en réduisant la charge de travail d'un autre. 
+
+De même, nous pourrions, au lieu de répartir les processus sur une grille de façon ``linéaire'', nous pourrions utiliser une répartition en serpentin. 

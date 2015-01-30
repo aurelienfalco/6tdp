@@ -56,15 +56,12 @@ stat-%:
 stat: $(addprefix stat-,$(PARALLEL))
 
 plot-mpi: $(addsuffix .data,$(MPI_VERSION))
-	image=speedup-mpi
-	@gnuplot -e "xname='Nombre de processus';name1='MPI synchrone';data1='mpi-synchrone.data';name2='MPI asynchrone';data2='mpi-asynchrone.data';name3='MPI persistant';data3='mpi-persistant.data';output='$(image).png" plot_sp.gp 
-	@eog $(image).png 2>/dev/null &
+	@image=speedup-mpi; gnuplot -e "xname='Nombre de processus';name1='MPI synchrone';data1='mpi-synchrone.data';name2='MPI asynchrone';data2='mpi-asynchrone.data';name3='MPI persistant';data3='mpi-persistant.data';output='$${image}.png" plot_sp.gp; eog $${image}.png 2>/dev/null &
 
 plot-thread: $(addsuffix .data,$(THREAD))
-	image=speedup-thread
-	@gnuplot -e "xname='Nombre de threads';name1='OpenMP';data1='omp.data';name2='pthread';data2='pthread.data';name3='OpenMP bloc';data3='omp-bloc.data';output='$(image).png" plot_sp.gp 
-	@eog $(image).png 2>/dev/null &
+	@image=speedup-thread; gnuplot -e "xname='Nombre de threads';name1='OpenMP';data1='omp.data';name2='pthread';data2='pthread.data';name3='OpenMP bloc';data3='omp-bloc.data';output='$${image}.png" plot_sp.gp; eog $${image}.png 2>/dev/null &
 
+plot: plot-mpi plot-thread
 
 clean:
 	rm -rf *.o $(v) $(addprefix life_,$(PARALLEL)) *~ *.png $(addsuffix .data,$(PARALLEL))

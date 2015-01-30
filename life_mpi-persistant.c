@@ -29,8 +29,8 @@ int main(int argc, char* argv[])
 	get_arg(argc,argv,&nb_row,&nb_col);
 
 	if (rank == 0){
-		CHK_ERR(BS % nb_row, "Warning: %d (size of board) not divisible by %d (number of rows in grid). Results may not be correct.\n", BS, nb_row);
-		CHK_ERR(BS % nb_col, "Warning: %d (size of board) not divisible by %d (number of columns in grid). Results may not be correct.\n", BS, nb_col);
+		CHK_ERR(BS % nb_row, "Warning: %d (size of board) not divisible by %d (number of rows in grid of procs). Results may not be correct.\n", BS, nb_row);
+		CHK_ERR(BS % nb_col, "Warning: %d (size of board) not divisible by %d (number of columns in grid of procs). Results may not be correct.\n", BS, nb_col);
 	}
 
 	init();

@@ -6,4 +6,5 @@
 #PBS -l naccesspolicy=singlejob
 #
 module load compiler/intel/stable mpi/openmpi/1.6.5
+cd 6tdp
 make stat
