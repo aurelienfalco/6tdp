@@ -1,6 +1,6 @@
 \section{Implémentation des différentes versions} % (fold)
 \label{sec:diff_rents_versions}
-Dans cette partie, nous allons exposer les différentes versions parallèles du jeu de la vie que nous avons développées. Dans un premier temps, nous allons voir les différentes versions utilisant une mémoire partagée (section \ref{partagee}), puis les version \texttt{MPI} (section \ref{mpi}), utilisant d'abord des communications synchrones, puis des communications asynchrones, et enfin persistantes. Le code itère sur une boucle incrémentant une variable $loop$ qui indique combien de fois on a effectué l'actualisation du plateau. 
+Dans cette partie, nous allons exposer les différentes versions parallèles du jeu de la vie que nous avons développé. Dans un premier temps, nous allons voir les différentes versions utilisant une mémoire partagée (section \ref{partagee}), puis les version \texttt{MPI} (section \ref{mpi}), utilisant d'abord des communications synchrones, puis des communications asynchrones, et enfin persistantes. Le code itère sur une boucle incrémentant une variable $loop$ qui indique combien de fois on a effectué l'actualisation du plateau. 
 
 \subsection{Mémoire partagée}
 \label{partagee}

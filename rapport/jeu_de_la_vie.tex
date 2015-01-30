@@ -1,7 +1,7 @@
 \section{Jeu de la vie} % (fold)
 \label{sec:jeu_de_la_vie}
 
-Le jeu de la vie est un modèle d'automate, dans lequel chacun des états connaît son état futur par le calcul de règles préétablies. Le jeu a été imaginé sur une grille à deux dimensions mais pourrait se généraliser dans n'importe quelle dimension. Nous allons toujours parler du jeu en deux dimensions. Les règles du jeu de la vie, pour chaque cellule, sont dépendantes des huit cellules voisines.
+Le jeu de la vie est un modèle d'automate, dans lequel chacun des états connaît son état futur par le calcul de règles préétablies. Le jeu a été imaginé sur une grille à deux dimensions mais pourrait se généraliser dans n'importe quelle dimension. Nous allons toujours parler du jeu en deux dimensions. Dans les règles du jeu de la vie, chaque cellule, est dépendante des huit cellules voisines.
 \begin{itemize}
 \item Une cellule morte possédant exactement trois voisines vivantes devient vivante.
 \item Une cellule vivante possédant deux ou trois voisines vivantes le reste, sinon elle meurt.
@@ -14,7 +14,7 @@ Ainsi, lorsque l'on possède trois voisins, nous sommes donc assurés d'être vi
 \begin{minipage}{.3\textwidth}
 \centering
 \includegraphics[width=0.5\textwidth]{Gol-born}
-\caption{Une cellule vit}
+\caption{Une cellule nait}
 \label{alive}
 \end{minipage}
 \hspace{0.5cm}

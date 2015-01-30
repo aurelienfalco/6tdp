@@ -5,8 +5,7 @@ Les tests de performances ont été effectués sur la machine PlaFRIM, en utilis
 
 La première version du code améliorée avec \texttt{OpenMP} donne des résultats intéressants, mais possible à améliorer. Quand les blocs deviennent très grands les accès mémoire ralentissent le programme. L'idée est de séparer les calculs en blocs (pavage) pour réduire ces temps d'accès à la mémoire (seconde version \texttt{OpenMP}). Les temps obtenus ne sont pas très concluants. Une autre possibilité disponible avec \texttt{OpenMP} est l'utilisation des tâches. On génère des tâches ayant des tailles de blocs optimales et on exécute ces tâches. Un des avantages d'\texttt{OpenMP} est de pouvoir définir facilement un nombre de threads quelconque.\\
 
-Pour les performances obtenues avec \texttt{pthread}, elle sont similaires à \texttt{OpenMP} pour le même nombre de threads. En effet, les deux versions utilisent le même type de ressources pour améliorer le temps de calcul. Le programme \texttt{pthread} actuel utilise des barrières pour s'assurer que les calculs précédents ont été effectués (à la façon d'\texttt{OpenMP}). Il est possible, avec un sémaphore par thread, de limiter les attentes à la terminaison des blocs adjacents et ainsi pour voir commencer l'étape suivante alors que certains threads n'ont pas terminé la précédente. Comme le nombre de threads disponibles sur un processeur ne peut pas dépasser une certaine valeur, il est plus intéressant (dans le cas des sémaphores) d'utiliser des blocs colonnes (car les matrices sont stockées en colonne dans notre projet). Enfin les blocs de threads ayant une taille dépendant de la matrice, il faudrait découper ces blocs en sous-blocs pour pouvoir optimiser les accès à la mémoire.
-
+Pour les performances obtenues avec \texttt{pthread}, elle sont similaires à \texttt{OpenMP} pour le même nombre de threads. En effet, les deux versions utilisent le même type de ressources pour améliorer le temps de calcul. Le programme \texttt{pthread} actuel utilise des barrières pour s'assurer que les calculs précédents ont été effectués (à la façon d'\texttt{OpenMP}). Il est possible, avec un sémaphore par thread, de limiter les attentes à la terminaison des blocs adjacents et ainsi pour voir commencer l'étape suivante alors que certains threads n'ont pas terminé la précédente. Comme le nombre de threads disponibles sur un processeur ne peut pas dépasser une certaine valeur, il est plus intéressant (dans le cas des sémaphores) d'utiliser des blocs colonnes (car les matrices sont stockées en colonne dans notre projet). Enfin les blocs de threads ayant une taille dépendant de la matrice, il faudrait découper ces blocs en sous-blocs pour pouvoir optimiser les accès à la mémoire. On peut remarquer que la version pthread est légèrement meilleure aux pics de performance, ceci est causé par la surcouche apportée par \texttt{OpenMP}, à l'inverse, quand le nombre de thread n'est pas optimal, \texttt{OpenMP} est légèrement devant.
 
 \begin{figure}[h!]
 \centering
@@ -20,9 +19,9 @@ La figure \ref{fig:sp-thread} montre les résultats obtenus pour les versions à
 
 Les performances de la version \texttt{MPI} sont meilleures que celles des versions multi-thread. \texttt{MPI} permet rajouter un nombre illimité de processus et donc de dépasser les accélérations des autres versions. Les trois versions de \texttt{MPI} ont des performances sensiblement identiques car les matrices testées ne sont pas exceptionnellement grandes et le nombre de processus reste relativement faible comparé à un gros calculateur. Cependant, la version synchrone avec les communications bloquantes reste la moins efficace, puisqu'elle ne fait rien durant ses communications. La différence entre la version asynchrone et la version persistante est la rapidité d'exécution des communications. La version persistante n'a pas besoin de copier les buffers et de préparer les requêtes ; le programme gagne donc un peu de temps, mais cela n'est visible que sur de longues exécutions avec beaucoup de communications.
 
-\begin{figure}[H]
+\begin{figure}[h!]
 \centering
-% \includegraphics[width=0.8\textwidth]{sp-proc.png}
+\includegraphics[width=0.8\textwidth]{speedup-mpi.png}
 \caption{Speed up des versions multi-processus}
 \label{fig:sp-proc}
 \end{figure}
