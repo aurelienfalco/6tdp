@@ -36,8 +36,8 @@ void barrier() {
 
 void* start_work(void *param) {
     int loop, i, j, thread_id = (int)param, count, local_alive;
-	int istart = (thread_id / threads_per_col) * col_block_size + 1;
-	int iend = ((thread_id / threads_per_col) + 1) * col_block_size;
+	int istart = (thread_id / threads_per_row) * col_block_size + 1;
+	int iend = ((thread_id / threads_per_row) + 1) * col_block_size;
 	int jstart = (thread_id % threads_per_row) * row_block_size + 1;
 	int jend = ((thread_id % threads_per_row) + 1) * row_block_size;
 	int end_num = BS;
