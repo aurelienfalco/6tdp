@@ -27,7 +27,7 @@ La figure \ref{fig:sp-proc} montre les performances des différentes versions \t
 \label{fig:sp-proc}
 \end{figure}
 
-On peut aussi noter que le speedup est croissant avec la taille de plateau utilisée(Fig. \ref{sp-mpi-size}, \ref{sp-thread-size}). Dans ces tests, le nombre de processus/threads utilisé est 8. Le speedup s'approche (mais n'atteint pas) ce nombre de 8. S'il l'atteignait, cela signifierait une efficacité de 1, ce qui serait du parallélisme parfait.
+On peut aussi noter que le speedup est croissant avec la taille de plateau utilisée(Fig. \ref{sp-mpi-size}, \ref{sp-thread-size}). Dans ces tests, le nombre de processus/threads utilisé est 8. Le speedup s'approche (mais n'atteint pas) ce nombre de 8. S'il l'atteignait, cela signifierait une efficacité de 1, ce qui serait du parallélisme parfait. Remarquons aussi que les versions \texttt{MPI} persistantes et asynchrones sont largement meilleures que la version synchrone pour de petite tailles et que la différence se tasse avec la taille croissante du plateau. 
 
 \begin{figure}[H]
 \centering
