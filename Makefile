@@ -29,7 +29,7 @@ life_%: life_%.c $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@
 
 life_pthread:%: %.c $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@ -lpthread
+	$(CC) $(CFLAGS) $^ -o $@ -lm -lpthread
 
 $(NO_MPI):%: life_%
 	./$< -t $(t) -s $(s) -p $(p) -n $(n)
