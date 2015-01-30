@@ -1,7 +1,7 @@
 CC = mpicc
 EX = mpiexec
 
-VERSION = seq omp omp-bloc # pthread
+VERSION = seq omp omp-bloc pthread
 # which version to run. Must be chosen from VERSION list and mpi
 MPI_VERSION = mpi-synchrone mpi-asynchrone mpi-persistant
 v = mpi-asynchrone

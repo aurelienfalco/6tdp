@@ -6,6 +6,7 @@
 
 pthread_mutex_t barrier_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t barrier_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t alive_mutex = PTHREAD_MUTEX_INITIALIZER;
 int barrier_count = 0;
 int barrier_id = 0;
 sem_t *sems_neig;
@@ -33,23 +34,12 @@ void barrier() {
 }
 
 void* start_work(void *param) {
-    int loop, i, j, num_alive, thread_id = (int)param, count;
+    int loop, i, j, thread_id = (int)param, count, local_alive;
 	int istart = (thread_id / threads_per_side) * block_size + 1;
 	int iend = ((thread_id / threads_per_side) + 1) * block_size;
 	int jstart = (thread_id % threads_per_side) * block_size + 1;
 	int jend = ((thread_id % threads_per_side) + 1) * block_size;
 	int end_num = threads_per_side * block_size;
-	
-	if (thread_id == 1) {
-		printf("block_size=%d\n", block_size);
-		printf("proc=%d\n", thread_id);
-		printf("maxloop=%d\n", maxloop);
-		printf("istart=%d\n", istart);
-		printf("iend=%d\n", iend);
-		printf("jstart=%d\n", jstart);
-		printf("jend=%d\n", jend);
-		printf("end_num=%d\n", end_num);
-	}
 	
     for (loop = 1; loop <= maxloop; loop++) {
         // Chaque proc copie ses données dans les cellules fantomes associées à ses cellules
@@ -60,7 +50,6 @@ void* start_work(void *param) {
 				cell(end_num+1, 0) = cell(1, end_num);
 			for (j = jstart; j <= jend; j++) {
 				cell(end_num+1, j) = cell(1, j);
-				printf("(%d,%d)", 1, j);
 			}
 		}
 		else if (iend == end_num) {
@@ -79,49 +68,20 @@ void* start_work(void *param) {
 		else if (jend == end_num) {
 			for (i = istart; i <= iend; i++)
 				cell(i, 0) = cell(i, end_num);
-		}		
-		
-		/*for (i = 0; i < 3; i++) {
-			int proc = thread_id;
-			if (i == 0)
-				proc = (proc % threads_per_side == 0?proc + threads_per_side - 1:proc-1);
-			else if (i == 2)
-				proc = ((proc+1)  % threads_per_side == 0?proc - threads_per_side + 1:proc+1);
-			//if (thread_id == 0)
-				printf("thread_id=%d -- i=%d -- proc=%d\n", thread_id, i, proc);
-			for (j = 0; j < 3; j++) {
-				if (!(i == 1 && j == 1)) {
-					if (j == 0)
-						proc = (proc / threads_per_side == 0?proc + threads_per_side*(threads_per_side-1):proc-threads_per_side);
-					else if (j == 2)
-						proc = (proc % threads_per_side == (threads_per_side-1)?(proc + threads_per_side) % threads_per_side:proc+threads_per_side);
-					if (thread_id == 0) {
-						printf("(%d,%d) => %d\n", i, j, proc);
-					}
-					sem_post(&sems_majs[proc]);
-				}
-			}
-		}		
-		
-		count = 8;
-		while (count) {
-			sem_wait(&sems_majs[thread_id]);
-			count--;
-		}*/
+		}
 		
 		barrier();
 		
-		if (thread_id > 0) {
-			for (i=0; i<=BS+2; i++) {
-				for (j=0; j<=BS+2; j++) {
+		/*if (thread_id > 0) {
+			for (i=0; i<BS+2; i++) {
+				for (j=0; j<BS+2; j++) {
 					printf("%d", cell(i, j));
 				}
 				printf("\n");
 			}
 			printf("------------\n");
-		}
-		
-		barrier();
+			}
+		barrier();*/
 		
 		// Calcul des voisins
  		for (j = jstart; j <= jend; j++) {
@@ -133,33 +93,11 @@ void* start_work(void *param) {
  			}
  		}
 		
-		/*for (i = 0; i < 3; i++) {
-			int proc = thread_id;
-			if (i == 0)
-				proc = (proc % threads_per_side == 0?proc + threads_per_side - 1:proc-1);
-			else if (i == 2)
-				proc = ((proc+1)  % threads_per_side == 0?proc - threads_per_side + 1:proc+1);
-			for (j = 0; j <= 3; j++) {
-				if (!(i == 1 && j == 1)) {
-					if (j == 0)
-						proc = (proc / threads_per_side == 0?proc + threads_per_side*(threads_per_side-1):proc-threads_per_side);
-					else if (j == 2)
-						proc = (proc % threads_per_side == (threads_per_side-1)?(proc + threads_per_side) % threads_per_side:proc+threads_per_side);
-					sem_post(&sems_neig[proc]);
-				}
-			}
-		}		
-		
-		count = 8;
-		while (count) {
-			sem_wait(&sems_neig[thread_id]);
-			count--;
-			}*/
-		
+		num_alive = 0;
 		barrier();
 		
 		// MAJ
-		num_alive = 0;
+	    local_alive = 0;
  		for (j = jstart; j <= jend; j++) {
  			for (i = istart; i <= iend; i++) {
  				if ( (ngb( i, j ) < 2) || 
@@ -171,12 +109,15 @@ void* start_work(void *param) {
 						cell(i, j) = 1;
 				}
 				if (cell(i, j) == 1) {
-					num_alive ++;
+					local_alive ++;
 				}
 			}
 		}
+		pthread_mutex_lock(&alive_mutex);
+		num_alive += local_alive;
+		pthread_mutex_unlock(&alive_mutex);
 	}
-
+	
 	return NULL;
 }
 
@@ -227,12 +168,12 @@ int main(int argc, char* argv[])
 	printf("Final number of living cells = %d\n", num_alive);
 	printf("time=%.2lf ms\n",(double)temps * 1.e3);
 
-	for (i=1; i<=BS; i++) {
+	/*for (i=1; i<=BS; i++) {
 		for (j=1; j<=BS; j++) {
 				printf("%d", ngb(i, j));
 		}
 		printf("\n");
-	}
+	}*/
 
 	if (print) {
     	output_board( BS, &(cell(1, 1)), ldboard, maxloop);
