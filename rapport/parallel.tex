@@ -1,6 +1,6 @@
 \section{Implémentation des différentes versions} % (fold)
 \label{sec:diff_rents_versions}
-Dans cette partie, nous allons exposer les différentes versions parallèles du jeu de la vie que nous avons développées. Dans un premier temps, nous allons voir les différentes versions utilisant une mémoire partagée (section \ref{partagee}), puis les version \texttt{MPI} (section \ref{mpi}), utilisant d'abord des communications synchrones, puis des communications asynchrones, et enfin persistantes. Le code itère sur une boucle incrémentant une variable $loop$ qui indique combien de fois on a effectué l'actualisation du plateau. 
+Dans cette partie, nous allons exposer les différentes versions parallèles du jeu de la vie que nous avons développées. Dans un premier temps, nous allons voir les différentes versions utilisant une mémoire partagée (section \ref{partagee}), puis les version \texttt{MPI} (section \ref{mpi}), utilisant d'abord des communications synchrones, puis des communications asynchrones, et enfin persistantes. Le code itère sur une boucle incrémentant une variable $loop$ qui indique combien de fois on a effectué l'actualisation du plateau. Nous nous intéressons surtout au code contenu dans cette boucle.
 
 \subsection{Mémoire partagée}
 \label{partagee}
@@ -8,7 +8,7 @@ Dans cette partie, nous allons exposer les différentes versions parallèles du 
 \subsubsection{OpenMP}
 \label{openmp}
 \paragraph{Principe}
-Dans le cas d'\texttt{OpenMP}, on va essayer de paralléliser les boucles de calcul du nombre de voisins et d'actualisation des cellules en fonction du nombre de voisins (figures \ref{boucle_voisins} et \ref{boucle_actualisation}). Pour cela, on spécifie simplement que l'on veut effectuer les boucles $for$ en parallèle avec l'instruction \ref{omp_parallel}, insérée juste avant les boucles. Dans le cas de l'exemple \ref{boucle_actualisation}, on veut calculer le nombre de cellules vivantes aussi. Pour ce faire, on effectue une réduction, employant l'opérateur addition sur la variable $num\_alive$. 
+Dans le cas d'\texttt{OpenMP}, on va essayer de paralléliser les boucles de calcul du nombre de voisins et d'actualisation des cellules en fonction du nombre de voisins (figures \ref{boucle_voisins} et \ref{boucle_actualisation}), en distribuant les boucles sur un nombre prédéfini de threads. Pour cela, on spécifie simplement que l'on veut effectuer les boucles $for$ en parallèle avec l'instruction \ref{omp_parallel}, insérée juste avant les boucles. Dans le cas de l'exemple \ref{boucle_actualisation}, on veut calculer le nombre de cellules vivantes aussi. Pour ce faire, on effectue une réduction, employant l'opérateur addition sur la variable $num\_alive$. Le nombre de threads est fixé au tout début du programme, une fois les arguments passés en paramètre au programme lus. 
 
 \begin{figure}[!ht]
 \begin{lstlisting}
@@ -70,7 +70,7 @@ Le but de cette version est de répartir les blocs de calcul sur plusieurs proce
 \paragraph{Communications synchrones}
 Dans cette version, les communications sont synchrones. Pour cela, nous avons utilisé la fonction \emph{MPI\_Sendrecv}. \texttt{MPI} gère alors tout seul l'envoi et la réception sans créer de deadlocks. Nous aurions aussi pu, pour éviter les deadlocks, utiliser un système d'envoi des processus impairs puis pairs, ou encore faire en sorte qu'un processus reçoit avant d'envoyer (première version à préférer). 
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
 \begin{lstlisting}
 Send(up,line[1])
 Recv(up,line[0])
@@ -111,7 +111,11 @@ end do
 
 
 \paragraph{Communications asynchrones}
-Pour bénéficier des communications asynchrones, il fallait recouvrir les communications par des calculs. Pour cela, nous effectuons d'abord la communication entre le processus situé au-dessus et celui en-dessous, pour ensuite communiquer avec les voisins de droite et de gauche. Nous pouvons recouvrir les communications avec le calcul des voisins (voir le code de la figure \ref{recouvrement}). Nous calculons la moîtié d'un bloc, sans les côtés, pendant la première partie des communications, puis le reste du bloc pendant la deuxième partie des communications, toujours sans les côtés de droite et de gauche (mais en faisant cette fois la ligne du haut et du bas), pour enfin faire la colonne de droite et de gauche une fois que toutes les communications sont terminées. Dans le code de la figure \ref{recouvrement}, les $Send$ et $Recv$ sont tous asynchrones ($MPI\_Isend$ et $MPI\_Irecv$). On impose cependant une barrière permettant de s'assurer que ces communications sont finies (l. 12 et 27). L'ordre des communications peut être résumé par le schéma de la figure \ref{fig:comm}. A noter que l'on envoie d'abord seulement les cellules que l'on connaît, ce qui constitue donc un envoie de taille $n$. Au deuxième tour de communications, l'envoi est de taille $m+2$.
+Pour bénéficier des communications asynchrones, il fallait recouvrir les communications par des calculs. Pour cela, nous effectuons d'abord la communication entre le processus situé au-dessus et celui en-dessous, pour ensuite communiquer avec les voisins de droite et de gauche. Nous pouvons alors recouvrir les communications avec le calcul des voisins (voir le code de la figure \ref{recouvrement}). 
+Nous calculons la moîtié d'un bloc, sans les côtés, pendant la première partie des communications, puis le reste du bloc pendant la deuxième partie des communications, toujours sans les côtés de droite et de gauche (mais en faisant cette fois la ligne du haut et du bas, sans les extrêmes), pour enfin faire la colonne de droite et de gauche une fois que toutes les communications sont terminées. 
+Dans le code de la figure \ref{recouvrement}, les $Send$ et $Recv$ sont tous asynchrones ($MPI\_Isend$ et $MPI\_Irecv$). On impose cependant une barrière permettant de s'assurer que ces communications sont finies (l. 12 et 27), lorsqu'on en a besoin pour la suite.
+
+L'ordre des communications peut être résumé par le schéma de la figure \ref{fig:comm}. A noter que l'on envoie d'abord seulement les cellules que l'on connaît, ce qui constitue donc un envoie de taille $n$. Au deuxième tour de communications, l'envoi est de taille $m+2$.
 
 \begin{figure}[!ht]
 \centering
