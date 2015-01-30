@@ -67,6 +67,9 @@ La version utilisant \texttt{pthread} découpe le plateau de jeu en plusieurs bl
 
 Le but de cette version est de répartir les blocs de calcul sur plusieurs processeurs. Les processus ne contiennent dans cette version qu'un seul thread. On considère que les blocs sont tous de taille $m \times n$, $m$ le nombre de lignes et $n$ le nombre de colonnes. Des cases fantômes sont rajoutées tout autour du bloc, ce qui en fait des blocs de taille $(m+2) \times (n+2)$.
 
+\paragraph{Communications synchrones}
+Dans cette version, les communications sont synchrones. Pour cela, nous avons utilisé la fonction \emph{MPI\_Sendrecv}. \texttt{MPI} gère alors tout seul l'envoi et la réception sans créer de deadlocks. Nous aurions aussi pu, pour éviter les deadlocks, utiliser un système d'envoi des processus impairs puis pairs, ou encore faire en sorte qu'un processus reçoit avant d'envoyer (première version à préférer). 
+
 \begin{figure}[h!]
 \begin{lstlisting}
 Send(up,line[1])
@@ -76,7 +79,7 @@ Recv(down,line[m+1])
 
 for (j = 2; j < n; j++) do
 	for (i = 2; i < m/2; i++) do
-		calc_ngb(i,j);
+		calcul_nb_voisins(i,j);
 	end do
 end do
 
@@ -89,29 +92,33 @@ Recv(right,column[n])
 
 for (j = 2; j < n ; j++) do
 	for (i = m/2; i <= m; i++) do
-		calc_ngb(i,j);
+		calcul_nb_voisins(i,j);
 	end do
-	i = 1;
-	calc_ngb(i,j);
+	calcul_nb_voisins(1,j);
 end do
 
 Waitall(5-8);
 
 for (j = 1; j <= n ; j+=n-1) do
 	for (i = 1; i <= m; i++) do
-		calc_ngb(i,j);
+		calcul_nb_voisins(i,j);
 	end do
 end do
-
 \end{lstlisting}
 \caption{Recouvrement des communications par des calculs}
 \label{recouvrement}
 \end{figure}
-\paragraph{Communications synchrones}
-Dans cette version, les communications sont synchrones. Pour cela, nous avons utilisé la fonction \emph{MPI\_Sendrecv}. \texttt{MPI} gère alors tout seul l'envoi et la réception sans créer de deadlocks. Nous aurions aussi pu, pour éviter les deadlocks, utiliser un système d'envoi des processus impairs puis pairs. 
-\paragraph{Communications asynchrones}
-Pour bénéficier des communications asynchrones, il fallait recouvrir les communications par des calculs. Pour cela, nous effectuons d'abord la communication entre le processus situé au-dessus et celui en-dessous, pour ensuite communiquer avec les voisins de droite et de gauche. Nous pouvons recouvrir les communications avec une partie du calcul des voisins (voir le code de la figure \ref{recouvrement}). Nous calculons la moîtié d'un bloc, sans les côtés, pendant la première partie des communications, puis le reste du bloc pendant la deuxième partie des communications, toujours sans les côtés de droite et de gauche (mais en faisant cette fois la ligne du haut et du bas), pour enfin faire la colonne de droite et de gauche une fois que toutes les communications sont terminées. Dans le code de la figure \ref{recouvrement}, les $Send$ et $Recv$ sont tous asynchrones ($MPI\_Isend$ et $MPI\_Irecv$). On impose cependant une barrière permettant de s'assurer que ces communications sont finies (l. 12 et 27).
 
+
+\paragraph{Communications asynchrones}
+Pour bénéficier des communications asynchrones, il fallait recouvrir les communications par des calculs. Pour cela, nous effectuons d'abord la communication entre le processus situé au-dessus et celui en-dessous, pour ensuite communiquer avec les voisins de droite et de gauche. Nous pouvons recouvrir les communications avec le calcul des voisins (voir le code de la figure \ref{recouvrement}). Nous calculons la moîtié d'un bloc, sans les côtés, pendant la première partie des communications, puis le reste du bloc pendant la deuxième partie des communications, toujours sans les côtés de droite et de gauche (mais en faisant cette fois la ligne du haut et du bas), pour enfin faire la colonne de droite et de gauche une fois que toutes les communications sont terminées. Dans le code de la figure \ref{recouvrement}, les $Send$ et $Recv$ sont tous asynchrones ($MPI\_Isend$ et $MPI\_Irecv$). On impose cependant une barrière permettant de s'assurer que ces communications sont finies (l. 12 et 27). L'ordre des communications peut être résumé par le schéma de la figure \ref{fig:comm}. A noter que l'on envoie d'abord seulement les cellules que l'on connaît, ce qui constitue donc un envoie de taille $n$. Au deuxième tour de communications, l'envoi est de taille $m+2$.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.6\textwidth]{comm.pdf}
+\caption{Ordre des communications. Les rouges doivent se faire avant les vertes.}
+\label{fig:comm}
+\end{figure}
 
 \paragraph{Communications persistantes}
 Les communications sur la figure \ref{recouvrement}, des l. 1 à 4 et l. 14 à 17, sont remplacées par un simple $MPI\_Startall$, qui va lancer les requêtes, préparées à l'avance. De cette façon, les requêtes sont préparées dès le début du programme, une et une seule fois, et non pas à chaque tour de boucle de la variable $loop$. 
