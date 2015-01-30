@@ -62,7 +62,7 @@ plot-mpi: $(addsuffix .data,$(MPI_VERSION))
 
 plot-thread: $(addsuffix .data,$(THREAD))
 	image=speedup-thread
-	@gnuplot -e "xname='Nombre de threads';name1='OpenMP';data1='seq.data';name2='pthread';data2='pthread.data';name3='OpenMP bloc';data3='omp-bloc.data';output='$(image).png" plot_sp.gp 
+	@gnuplot -e "xname='Nombre de threads';name1='OpenMP';data1='omp.data';name2='pthread';data2='pthread.data';name3='OpenMP bloc';data3='omp-bloc.data';output='$(image).png" plot_sp.gp 
 	@eog $(image).png 2>/dev/null &
 
 
