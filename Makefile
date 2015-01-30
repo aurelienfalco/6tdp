@@ -1,22 +1,22 @@
 CC = mpicc
 EX = mpiexec
+INC = util common
+OBJ = $(INC:=.o)
+CFLAGS = -std=c99 -g -O0 -Wall -Wextra
 
 SEQ = seq
 THREAD =  omp omp-bloc pthread
 NO_MPI = $(SEQ) $(THREAD)
-# which version to run. Must be chosen from VERSION list and mpi
 MPI_VERSION = mpi-synchrone mpi-asynchrone mpi-persistant
 PARALLEL = $(THREAD) $(MPI_VERSION)
 ALL = $(SEQ) $(PARALLEL)
-v = mpi-asynchrone
 
-INC = util common
-OBJ = $(INC:=.o)
-CFLAGS = -std=c99 -g -O0 -Wall -Wextra
-n = 6
+#default values
+v = mpi-persistant
+n = 4
 nr = 2
 nc = 3
-t = 10
+t = 100
 s = 3600
 p = 0
 
