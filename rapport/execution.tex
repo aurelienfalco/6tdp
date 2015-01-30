@@ -14,16 +14,32 @@ Pour les performances obtenues avec \texttt{pthread}, elle sont similaires à \t
 \label{fig:sp-thread}
 \end{figure}
 
-La figure \ref{fig:sp-thread} montre les résultats obtenus pour les versions à mémoire partagée (OpenMP et pthread) en faisant varier le nombre de threads.
+La figure \ref{fig:sp-thread} montre les résultats obtenus pour les versions à mémoire partagée (OpenMP et pthread) en faisant varier le nombre de threads. La largeur du plateau de jeu est alors 3600 cellules.
 On remarque une chute lorsque l'on passe de 8 à 9 threads. Les machines ne pouvant faire tourner que 8 threads, la chute semble logique, car le problème sera moins bien découpé et un des threads devra attendre que les autres terminent avant de pouvoir s'exécuter.\\
 
 Les performances de la version \texttt{MPI} sont meilleures que celles des versions multi-threadées. \texttt{MPI} permet à un nombre illimité de processus de s'exécuter en parallèle et donc de dépasser les accélérations des autres versions. Les trois versions de \texttt{MPI} ont des performances sensiblement identiques car les matrices testées ne sont pas exceptionnellement grandes et le nombre de processus reste relativement faible comparé à un gros calculateur. Cependant, la version synchrone avec les communications bloquantes reste la moins efficace, puisqu'elle ne fait rien durant ses communications. La différence entre la version asynchrone et la version persistante est la rapidité d'exécution des communications. La version persistante n'a pas besoin de copier les buffers et de préparer les requêtes ; le programme gagne donc un peu de temps, mais cela n'est visible que sur de longues exécutions avec beaucoup de communications.
+La figure \ref{fig:sp-proc} montre les performances des différentes versions \texttt{MPI} pour un plateau de jeu d'une largeur de 3600 cellules aussi, en faisant varier le nombre de processus. On peut voir que les courbes suivent la tendance de $y=x$, et décrochent un peu vers la fin, probablement à cause d'un surcoût de communications (en effet la version synchrone est plus faible que les autres).
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\textwidth]{speedup-mpi.png}
 \caption{Speed up des versions multi-processus}
 \label{fig:sp-proc}
+\end{figure}
+
+On peut aussi noter que le speedup est croissant avec la taille de plateau utilisée(Fig. \ref{sp-mpi-size}, \ref{sp-thread-size}). Dans ces tests, le nombre de processus/threads utilisé est 8. Le speedup s'approche (mais n'atteint pas) ce nombre de 8. S'il l'atteignait, cela signifierait une efficacité de 1, ce qui serait du parallélisme parfait.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{sp-mpi-size.png}
+\caption{Speed up de MPI avec une taille de plateau variable}
+\label{sp-mpi-size}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{sp-thread-size.png}
+\caption{Speed up d'OpenMP avec une taille de plateau variable}
+\label{sp-thread-size}
 \end{figure}
 
 La meilleure solution est de combiner \texttt{MPI}, avec des communications persistantes, avec \texttt{OpenMP} ou \texttt{pthread} pour multiplier les gains de performance, puisqu'un processus \texttt{MPI} s'exécute sur un c\oe ur qui peut avoir plusieurs threads.
