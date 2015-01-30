@@ -10,7 +10,7 @@ Dans cette partie, nous allons exposer les différentes versions parallèles du 
 \paragraph{Principe}
 Dans le cas d'\texttt{OpenMP}, on va essayer de paralléliser les boucles de calcul du nombre de voisins et d'actualisation des cellules en fonction du nombre de voisins (figures \ref{boucle_voisins} et \ref{boucle_actualisation}). Pour cela, on spécifie simplement que l'on veut effectuer les boucles $for$ en parallèle avec l'instruction \ref{omp_parallel}, insérée juste avant les boucles. Dans le cas de l'exemple \ref{boucle_actualisation}, on veut calculer le nombre de cellules vivantes aussi. Pour ce faire, on effectue une réduction, employant l'opérateur addition sur la variable $num\_alive$. 
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
 \begin{lstlisting}
 for (j = 1; j <= BS; j++) do
 for (i = 1; i <= BS; i++) do
@@ -113,7 +113,7 @@ end do
 \paragraph{Communications asynchrones}
 Pour bénéficier des communications asynchrones, il fallait recouvrir les communications par des calculs. Pour cela, nous effectuons d'abord la communication entre le processus situé au-dessus et celui en-dessous, pour ensuite communiquer avec les voisins de droite et de gauche. Nous pouvons recouvrir les communications avec le calcul des voisins (voir le code de la figure \ref{recouvrement}). Nous calculons la moîtié d'un bloc, sans les côtés, pendant la première partie des communications, puis le reste du bloc pendant la deuxième partie des communications, toujours sans les côtés de droite et de gauche (mais en faisant cette fois la ligne du haut et du bas), pour enfin faire la colonne de droite et de gauche une fois que toutes les communications sont terminées. Dans le code de la figure \ref{recouvrement}, les $Send$ et $Recv$ sont tous asynchrones ($MPI\_Isend$ et $MPI\_Irecv$). On impose cependant une barrière permettant de s'assurer que ces communications sont finies (l. 12 et 27). L'ordre des communications peut être résumé par le schéma de la figure \ref{fig:comm}. A noter que l'on envoie d'abord seulement les cellules que l'on connaît, ce qui constitue donc un envoie de taille $n$. Au deuxième tour de communications, l'envoi est de taille $m+2$.
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
 \centering
 \includegraphics[width=0.6\textwidth]{comm.pdf}
 \caption{Ordre des communications. Les rouges doivent se faire avant les vertes.}
