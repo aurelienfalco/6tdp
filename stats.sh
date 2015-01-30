@@ -56,4 +56,6 @@ nc=3
 	# i=$(($i+256))
 # done
 sorted=`cat ${v}.data | sort -h`
+# for i in $sorted
+# echo "$sorted"
 echo "$sorted" > ${v}.data

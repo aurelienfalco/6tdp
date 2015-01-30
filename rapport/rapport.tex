@@ -1,6 +1,6 @@
 \documentclass[12pt]{article}
 \usepackage[utf8]{inputenc} 
-\usepackage[french]{babel}
+% \usepackage[french]{babel}
 \usepackage{graphicx} \graphicspath{{./img/}}
 \usepackage{amsmath,amssymb,amsthm} 
 % \usepackage{algorithm,algorithmic}
@@ -32,7 +32,9 @@ breakatwhitespace=false,    % sets if automatic breaks should only happen at whi
 escapeinside={\%*}{*)}          % if you want to add a comment within your code
 }
 
-\renewcommand\thesection{\arabic{section}}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true}
+
 \newcommand\hsp{\hspace{1.0cm}}
 
 \begin{document}
